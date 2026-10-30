@@ -1,0 +1,148 @@
+/* pages/index/index.wxss */
+.container {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 80rpx 40rpx 60rpx;
+}
+
+.header {
+  text-align: center;
+  padding: 40rpx 0 60rpx;
+}
+
+.title {
+  font-size: 52rpx;
+  font-weight: bold;
+  color: #fff;
+  display: block;
+}
+
+.subtitle {
+  font-size: 28rpx;
+  color: rgba(255,255,255,0.8);
+  margin-top: 16rpx;
+  display: block;
+}
+
+.nav-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 30rpx;
+  margin-top: 20rpx;
+}
+
+.nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255,255,255,0.95);
+  border-radius: 24rpx;
+  padding: 50rpx 20rpx 40rpx;
+  box-shadow: 0 8rpx 32rpx rgba(0,0,0,0.1);
+  text-decoration: none;
+  transition: all 0.2s;
+}
+
+.nav-item:active {
+  transform: scale(0.95);
+}
+
+.nav-icon {
+  font-size: 64rpx;
+  margin-bottom: 16rpx;
+}
+
+.nav-label {
+  font-size: 32rpx;
+  font-weight: bold;
+  color: #333;
+}
+
+.nav-desc {
+  font-size: 24rpx;
+  color: #999;
+  margin-top: 8rpx;
+}
+
+.placeholder {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+
+/* ===== 个人信息入口 ===== */
+.profile-entry {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 50rpx;
+  padding: 20rpx 0;
+}
+
+.profile-entry-text {
+  font-size: 30rpx;
+  color: rgba(255, 255, 255, 0.85);
+  letter-spacing: 2rpx;
+}
+
+.profile-entry-underline {
+  width: 80rpx;
+  height: 2rpx;
+  background: rgba(255, 255, 255, 0.4);
+  margin-top: 8rpx;
+  border-radius: 2rpx;
+}
+
+.profile-entry:active {
+  opacity: 0.7;
+}
+
+/* ===== 我的队伍（通栏入口） ===== */
+.wide-entry {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 30rpx;
+  padding: 34rpx 32rpx;
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 24rpx;
+  box-shadow: 0 8rpx 32rpx rgba(0, 0, 0, 0.1);
+}
+
+.wide-entry:active {
+  transform: scale(0.98);
+  opacity: 0.9;
+}
+
+.wide-entry-main {
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+}
+
+.wide-entry-icon {
+  font-size: 48rpx;
+}
+
+.wide-entry-texts {
+  display: flex;
+  flex-direction: column;
+}
+
+.wide-entry-title {
+  font-size: 32rpx;
+  font-weight: bold;
+  color: #333;
+}
+
+.wide-entry-desc {
+  font-size: 23rpx;
+  color: #999;
+  margin-top: 6rpx;
+}
+
+.wide-entry-arrow {
+  font-size: 40rpx;
+  color: #ccc;
+}

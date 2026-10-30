@@ -1,0 +1,50 @@
+<!-- pages/team-create/team-create.wxml -->
+<view class="page">
+  <view class="form-header">
+    <text class="form-title">📝 创建队伍</text>
+    <text class="form-subtitle">{{eventName || '加载中...'}}</text>
+  </view>
+
+  <view class="form">
+    <!-- 队伍名称 -->
+    <view class="form-item">
+      <text class="form-label">队伍名称 <text class="required">*</text></text>
+      <input class="form-input" placeholder="请输入队伍名称（如：数模突击队）" value="{{teamName}}" bindinput="onTeamNameInput" maxlength="20" />
+    </view>
+
+    <!-- 人数上限 -->
+    <view class="form-item">
+      <text class="form-label">人数上限 <text class="required">*</text></text>
+      <view class="picker-row">
+        <picker mode="selector" range="{{sizeOptions}}" value="{{sizeIndex}}" bindchange="onSizeChange">
+          <view class="picker-display">{{sizeOptions[sizeIndex] || '请选择人数'}}</view>
+        </picker>
+        <text class="picker-hint">人/队</text>
+      </view>
+      <text class="form-hint" wx:if="{{maxSizeHint}}">{{maxSizeHint}}</text>
+    </view>
+
+    <!-- 队伍描述 -->
+    <view class="form-item">
+      <text class="form-label">队伍描述 <text class="required">*</text></text>
+      <textarea class="form-textarea" placeholder="请描述你的队伍需求、目标、希望招募什么样的队友..." value="{{description}}" bindinput="onDescriptionInput" maxlength="200" auto-height />
+      <text class="char-count">{{description.length || 0}}/200</text>
+    </view>
+
+    <!-- 联系方式 -->
+    <view class="form-item">
+      <text class="form-label">联系方式 <text class="required">*</text></text>
+      <input class="form-input" placeholder="请填写微信/QQ/手机号（方便队友联系你）" value="{{contact}}" bindinput="onContactInput" />
+    </view>
+
+    <!-- 个人描述 -->
+    <view class="form-item">
+      <text class="form-label">个人描述 <text class="required">*</text></text>
+      <textarea class="form-textarea" placeholder="请简单介绍你自己（如：有2年建模经验，擅长Python和论文写作）" value="{{userDesc}}" bindinput="onUserDescInput" maxlength="100" auto-height />
+      <text class="char-count">{{userDesc.length || 0}}/100</text>
+    </view>
+
+    <!-- 提交按钮 -->
+    <view class="submit-btn" bindtap="onSubmit">创建队伍</view>
+  </view>
+</view>

@@ -1,0 +1,272 @@
+/* pages/team-detail/team-detail.wxss */
+.page {
+  min-height: 100vh;
+  background: #f5f6fa;
+  padding: 30rpx;
+}
+
+.page-header {
+  padding: 10rpx 10rpx 20rpx;
+}
+
+.page-title {
+  font-size: 38rpx;
+  font-weight: bold;
+  color: #2d3436;
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ===== 工具栏（搜索 + 创建，随滚动消失） ===== */
+.toolbar {
+  display: flex;
+  gap: 16rpx;
+  margin-bottom: 30rpx;
+  align-items: center;
+}
+
+.search-box {
+  flex: 1;
+  display: flex;
+  gap: 12rpx;
+  background: #fff;
+  border-radius: 50rpx;
+  padding: 4rpx 4rpx 4rpx 24rpx;
+  border: 1rpx solid #e0e0e0;
+}
+
+.search-input {
+  flex: 1;
+  height: 72rpx;
+  font-size: 28rpx;
+  color: #2d3436;
+}
+
+.search-btn {
+  background: #6c5ce7;
+  color: #fff;
+  padding: 0 32rpx;
+  border-radius: 50rpx;
+  font-size: 26rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 72rpx;
+}
+
+.search-btn:active {
+  opacity: 0.8;
+}
+
+.create-btn {
+  background: #00b894;
+  color: #fff;
+  padding: 0 32rpx;
+  border-radius: 50rpx;
+  font-size: 28rpx;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 72rpx;
+  white-space: nowrap;
+}
+
+.create-btn:active {
+  opacity: 0.8;
+}
+
+/* ===== 队伍列表 ===== */
+.team-list {
+  display: flex;
+  flex-direction: column;
+  gap: 30rpx;
+}
+
+.team-card {
+  background: #fff;
+  border-radius: 20rpx;
+  padding: 30rpx;
+  box-shadow: 0 4rpx 16rpx rgba(0,0,0,0.06);
+}
+
+.team-card:active {
+  background: #f8f9fa;
+}
+
+.team-header {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12rpx;
+  margin-bottom: 20rpx;
+}
+
+.team-number {
+  font-size: 28rpx;
+  color: #6c5ce7;
+  font-weight: bold;
+  background: #eee9ff;
+  padding: 4rpx 16rpx;
+  border-radius: 8rpx;
+}
+
+.team-name {
+  font-size: 32rpx;
+  font-weight: bold;
+  color: #2d3436;
+  flex: 1;
+}
+
+.team-status {
+  font-size: 24rpx;
+  color: #b2bec3;
+  background: #f5f6fa;
+  padding: 4rpx 16rpx;
+  border-radius: 30rpx;
+}
+
+.team-status.recruiting {
+  color: #00b894;
+  background: #e0f7f0;
+}
+
+/* 成员列表 */
+.members {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16rpx;
+  margin-bottom: 16rpx;
+}
+
+.member-item {
+  display: flex;
+  align-items: center;
+  gap: 6rpx;
+  background: #f5f6fa;
+  padding: 4rpx 12rpx 4rpx 8rpx;
+  border-radius: 30rpx;
+  max-width: 240rpx;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.member-avatar {
+  font-size: 32rpx;
+  width: 44rpx;
+  height: 44rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #dfe6e9;
+  border-radius: 50%;
+}
+
+.member-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.member-name {
+  font-size: 24rpx;
+  color: #2d3436;
+  max-width: 120rpx;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.member-role {
+  font-size: 18rpx;
+  color: #b2bec3;
+  max-width: 80rpx;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.member-leader {
+  font-size: 20rpx;
+  color: #fff;
+  background: #00b894;
+  padding: 2rpx 12rpx;
+  border-radius: 4rpx;
+}
+
+.team-desc-preview {
+  font-size: 26rpx;
+  color: #636e72;
+  line-height: 1.6;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  margin-top: 10rpx;
+  padding-top: 16rpx;
+  border-top: 1rpx solid #f0f0f0;
+}
+
+/* 空状态 */
+.empty {
+  text-align: center;
+  padding: 120rpx 0;
+  color: #b2bec3;
+  font-size: 30rpx;
+}
+
+.empty-icon {
+  font-size: 80rpx;
+  display: block;
+  margin-bottom: 20rpx;
+}
+
+.empty-hint {
+  display: block;
+  font-size: 26rpx;
+  color: #dfe6e9;
+  margin-top: 12rpx;
+}
+
+/* ===== 筛选栏 ===== */
+.filter-bar {
+  display: flex;
+  gap: 16rpx;
+  margin-bottom: 20rpx;
+}
+
+.filter-item {
+  padding: 12rpx 28rpx;
+  border-radius: 30rpx;
+  font-size: 26rpx;
+  color: #636e72;
+  background: #fff;
+  border: 1rpx solid #eef0f4;
+}
+
+.filter-item.active {
+  color: #fff;
+  background: #6c5ce7;
+  border-color: #6c5ce7;
+}
+
+/* 已满的队伍降低视觉权重，但仍可点开查看 */
+.team-card.team-full {
+  opacity: 0.7;
+}
+
+/* ===== 分页状态 ===== */
+.list-footer {
+  text-align: center;
+  padding: 40rpx 0 60rpx;
+}
+
+.footer-text {
+  font-size: 25rpx;
+  color: #b2bec3;
+}
+
+.footer-tap {
+  color: #6c5ce7;
+}

@@ -1,0 +1,38 @@
+<!-- pages/event-list/event-list.wxml -->
+<view class="page">
+  <view class="page-header">
+    <text class="page-title">🏆 全部赛事</text>
+    <text class="page-count">共 {{total}} 个赛事</text>
+  </view>
+
+  <view class="event-list">
+    <view 
+      class="event-card" 
+      wx:for="{{eventList}}" 
+      wx:key="_id"
+      bindtap="goToDetail"
+      data-id="{{item._id}}"
+    >
+      <view class="event-title">{{item.title}}</view>
+      <view class="event-desc-preview">{{item.description}}</view>
+      <view class="event-footer">
+        <view class="event-tags">
+          <text class="tag team-tag" wx:if="{{item.canTeamUp}}">🔥 可组队</text>
+          <text class="tag" wx:else>📌 仅展示</text>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 分页状态 -->
+  <view class="list-footer" wx:if="{{eventList.length > 0}}">
+    <text class="footer-text" wx:if="{{loading}}">加载中...</text>
+    <text class="footer-text footer-tap" wx:elif="{{hasMore}}" bindtap="loadMore">上拉或点击加载更多</text>
+    <text class="footer-text" wx:else>已经到底了</text>
+  </view>
+
+  <view class="empty" wx:if="{{loaded && eventList.length === 0}}">
+    <text class="empty-icon">📭</text>
+    <text>暂无赛事</text>
+  </view>
+</view>

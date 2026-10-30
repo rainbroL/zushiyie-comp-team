@@ -1,0 +1,48 @@
+<!-- pages/profile/profile.wxml -->
+<view class="page">
+  <view class="page-header">
+    <text class="page-title">👤 个人信息</text>
+    <text class="page-subtitle">完善你的个人资料</text>
+  </view>
+
+  <view class="form">
+    <!-- 昵称 -->
+    <view class="form-item">
+      <text class="form-label">昵称 <text class="required">*</text></text>
+      <input 
+        class="form-input" 
+        placeholder="请输入你的昵称" 
+        value="{{nickName}}" 
+        bindinput="onNickNameInput" 
+        maxlength="10" 
+      />
+    </view>
+
+    <!-- 年级 -->
+    <view class="form-item">
+      <text class="form-label">年级 <text class="required">*</text></text>
+      <picker mode="selector" range="{{gradeOptions}}" value="{{gradeIndex}}" bindchange="onGradeChange">
+        <view class="picker-display">
+          {{gradeOptions[gradeIndex] || '请选择年级'}}
+        </view>
+      </picker>
+    </view>
+
+    <!-- 个人简介 -->
+    <view class="form-item">
+      <text class="form-label">个人简介</text>
+      <textarea 
+        class="form-textarea" 
+        placeholder="简单介绍一下你自己（如：热爱数学建模，擅长Python编程）" 
+        value="{{bio}}" 
+        bindinput="onBioInput" 
+        maxlength="100" 
+        auto-height 
+      />
+      <text class="char-count">{{bio.length || 0}}/100</text>
+    </view>
+
+    <!-- 保存按钮 -->
+    <view class="save-btn" bindtap="onSave">保存信息</view>
+  </view>
+</view>

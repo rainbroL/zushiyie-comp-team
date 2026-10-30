@@ -1,0 +1,69 @@
+<!-- pages/my-teams/my-teams.wxml -->
+<view class="page">
+
+  <!-- 我发起的 -->
+  <block wx:if="{{leading.length > 0}}">
+    <view class="section-title">我发起的队伍</view>
+    <view class="team-list">
+      <view
+        class="team-card"
+        wx:for="{{leading}}"
+        wx:key="_id"
+        data-id="{{item._id}}"
+        bindtap="goToTeam"
+      >
+        <view class="team-head">
+          <text class="team-number">#{{item.teamNumber}}</text>
+          <text class="team-name">{{item.teamName}}</text>
+          <text class="team-status {{item.isFull ? 'full' : ''}}">
+            {{item.isFull ? '已满' : '招募中'}}
+          </text>
+        </view>
+        <view class="team-meta">
+          <text class="meta-text">成员 {{item.members.length}}/{{item.maxSize}}</text>
+          <text class="meta-text" wx:if="{{item.eventId}}">·</text>
+          <text class="meta-text">队长是我</text>
+        </view>
+        <view class="team-desc" wx:if="{{item.description}}">{{item.description}}</view>
+      </view>
+    </view>
+  </block>
+
+  <!-- 我加入的 -->
+  <block wx:if="{{joined.length > 0}}">
+    <view class="section-title">我加入的队伍</view>
+    <view class="team-list">
+      <view
+        class="team-card"
+        wx:for="{{joined}}"
+        wx:key="_id"
+        data-id="{{item._id}}"
+        bindtap="goToTeam"
+      >
+        <view class="team-head">
+          <text class="team-number">#{{item.teamNumber}}</text>
+          <text class="team-name">{{item.teamName}}</text>
+          <text class="team-status {{item.isFull ? 'full' : ''}}">
+            {{item.isFull ? '已满' : '招募中'}}
+          </text>
+        </view>
+        <view class="team-meta">
+          <text class="meta-text">成员 {{item.members.length}}/{{item.maxSize}}</text>
+        </view>
+        <view class="team-desc" wx:if="{{item.description}}">{{item.description}}</view>
+      </view>
+    </view>
+  </block>
+
+  <!-- 空状态 -->
+  <view class="empty" wx:if="{{!loading && !hasAny}}">
+    <text class="empty-icon">🎒</text>
+    <text>你还没有加入任何队伍</text>
+    <text class="empty-hint">去看看有哪些赛事可以组队</text>
+    <view class="empty-btn" bindtap="goToEvents">浏览赛事</view>
+  </view>
+
+  <view class="loading" wx:if="{{loading}}">
+    <text>加载中...</text>
+  </view>
+</view>

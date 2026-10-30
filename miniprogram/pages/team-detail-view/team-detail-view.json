@@ -1,0 +1,6 @@
+{
+  "usingComponents": {},
+  "navigationBarTitleText": "队伍详情",
+  "enablePullDownRefresh": true,
+  "backgroundTextStyle": "dark"
+}

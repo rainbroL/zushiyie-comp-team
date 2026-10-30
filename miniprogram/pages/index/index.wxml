@@ -1,0 +1,53 @@
+<!-- pages/index/index.wxml -->
+<view class="container">
+  <!-- 标题 -->
+  <view class="header">
+    <text class="title">😎 组师爺</text>
+    <text class="subtitle">找到你的最佳队友</text>
+  </view>
+
+  <!-- 四个模块 -->
+  <view class="nav-grid">
+    <navigator url="/pages/event-list/event-list" class="nav-item">
+      <view class="nav-icon">🏆</view>
+      <text class="nav-label">赛事</text>
+      <text class="nav-desc">组队参赛</text>
+    </navigator>
+
+    <view class="nav-item placeholder">
+      <view class="nav-icon">🚗</view>
+      <text class="nav-label">拼车</text>
+      <text class="nav-desc">即将上线</text>
+    </view>
+
+    <view class="nav-item placeholder">
+      <view class="nav-icon">⚽</view>
+      <text class="nav-label">运动</text>
+      <text class="nav-desc">即将上线</text>
+    </view>
+
+    <view class="nav-item placeholder">
+      <view class="nav-icon">🎮</view>
+      <text class="nav-label">游戏</text>
+      <text class="nav-desc">即将上线</text>
+    </view>
+  </view>
+
+  <!-- 我的队伍 -->
+  <view class="wide-entry" bindtap="goToMyTeams">
+    <view class="wide-entry-main">
+      <text class="wide-entry-icon">👥</text>
+      <view class="wide-entry-texts">
+        <text class="wide-entry-title">我的队伍</text>
+        <text class="wide-entry-desc">我发起的、我加入的队伍都在这里</text>
+      </view>
+    </view>
+    <text class="wide-entry-arrow">›</text>
+  </view>
+
+  <!-- 个人信息入口 -->
+  <view class="profile-entry" bindtap="goToProfile">
+    <text class="profile-entry-text">👤 个人信息</text>
+    <view class="profile-entry-underline"></view>
+  </view>
+</view>

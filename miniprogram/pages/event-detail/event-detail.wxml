@@ -1,0 +1,31 @@
+<!-- pages/event-detail/event-detail.wxml -->
+<view class="page" wx:if="{{event}}">
+  
+  <!-- 赛事内容区域 -->
+  <view class="content-wrapper">
+    <!-- 赛事图片：直接写死地址 -->
+    <view class="image-wrapper" wx:if="{{event.imageUrl}}">
+      <image 
+      class="event-image" 
+      src="{{event.imageUrl}}" 
+      mode="widthFix"
+      />
+    </view>
+
+    <view class="detail-header">
+      <text class="detail-title">{{event.title}}</text>
+      <text class="detail-status" wx:if="{{event.canTeamUp}}">🔥 可组队</text>
+      <text class="detail-status" wx:else>📌 仅展示</text>
+    </view>
+
+    <view class="detail-body">
+      <text class="detail-desc" selectable="{{true}}">{{event.description}}</text>
+    </view>
+  </view>
+
+  <!-- 固定底部按钮 -->
+  <view class="fixed-btn" wx:if="{{event.canTeamUp}}" bindtap="goToTeamDetail">
+    <text class="btn-text">去组队 →</text>
+  </view>
+
+</view>

@@ -1,0 +1,90 @@
+<!-- pages/team-detail/team-detail.wxml -->
+<view class="page">
+  
+  <!-- 顶部：赛事名称 -->
+  <view class="page-header">
+    <text class="page-title">👥 {{eventName || '组队列表'}}</text>
+  </view>
+
+  <!-- 搜索框 + 创建按钮（同一行，随滚动消失） -->
+  <view class="toolbar">
+    <view class="search-box">
+      <input 
+        class="search-input" 
+        placeholder="输入 #编号 定位" 
+        value="{{searchValue}}"
+        bindinput="onSearchInput"
+        bindconfirm="doSearch"
+      />
+      <view class="search-btn" bindtap="doSearch">跳转</view>
+    </view>
+    <view class="create-btn" bindtap="goToCreateTeam">➕ 创建</view>
+  </view>
+
+  <!-- 筛选：满员队伍默认不显示，切到「全部」可以找到它 -->
+  <view class="filter-bar">
+    <view 
+      class="filter-item {{filter === 'recruiting' ? 'active' : ''}}" 
+      data-filter="recruiting" 
+      bindtap="onFilterTap"
+    >招募中</view>
+    <view 
+      class="filter-item {{filter === 'all' ? 'active' : ''}}" 
+      data-filter="all" 
+      bindtap="onFilterTap"
+    >全部（含已满）</view>
+  </view>
+
+  <!-- 队伍列表 -->
+  <view class="team-list" id="teamList">
+    <view 
+      class="team-card {{item.isFull ? 'team-full' : ''}}" 
+      wx:for="{{teamList}}" 
+      wx:key="_id"
+      id="team-{{item.teamNumber}}"
+      bindtap="goToTeamDetail"
+      data-id="{{item._id}}"
+    >
+      <!-- 编号 + 队伍名称 + 状态 -->
+      <view class="team-header">
+        <text class="team-number">#{{item.teamNumber}}</text>
+        <text class="team-name">{{item.teamName}}</text>
+        <text class="team-status" wx:if="{{item.isFull}}">已满</text>
+        <text class="team-status recruiting" wx:else>招募中</text>
+      </view>
+
+      <!-- 成员列表 -->
+      <view class="members">
+        <view 
+          class="member-item" 
+          wx:for="{{item.members}}" 
+          wx:for-item="member"
+          wx:key="openid"
+        >
+          <view class="member-avatar">{{member.avatar || '👤'}}</view>
+          <view class="member-info">
+            <text class="member-name">{{member.name}}</text>
+            <text class="member-role">{{member.role || '队员'}}</text>
+          </view>
+        </view>
+      </view>
+
+      <!-- 队伍详情预览 -->
+      <view class="team-desc-preview">{{item.description}}</view>
+    </view>
+  </view>
+
+  <!-- 分页状态 -->
+  <view class="list-footer" wx:if="{{teamList.length > 0}}">
+    <text class="footer-text" wx:if="{{loading}}">加载中...</text>
+    <text class="footer-text footer-tap" wx:elif="{{hasMore}}" bindtap="loadMore">上拉或点击加载更多</text>
+    <text class="footer-text" wx:else>已经到底了</text>
+  </view>
+
+  <!-- 空状态 -->
+  <view class="empty" wx:if="{{loaded && teamList.length === 0}}">
+    <text class="empty-icon">📭</text>
+    <text>{{filter === 'recruiting' ? '暂无招募中的队伍' : '还没有队伍'}}</text>
+    <text class="empty-hint">点击右上角「创建」发起组队</text>
+  </view>
+</view>
