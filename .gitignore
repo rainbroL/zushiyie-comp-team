@@ -1,0 +1,38 @@
+# ===== 微信开发者工具 =====
+# 存的是本机的 appid、编译设置、最近打开记录，不应该进仓库
+project.private.config.json
+
+# ===== 依赖 =====
+node_modules/
+cloudfunctions/*/node_modules/
+miniprogram_npm/
+
+# ===== 构建产物 =====
+dist/
+build/
+
+# ===== 环境变量与密钥 =====
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+
+# ===== 日志 =====
+*.log
+npm-debug.log*
+yarn-error.log*
+
+# ===== 编辑器 / 系统 =====
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+desktop.ini
+*.swp
+*~
+
+# ===== 本地临时目录 =====
+.temp/
+tmp/
