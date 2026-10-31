@@ -22,6 +22,12 @@ Page({
     }
     this.setData({ eventId })
     this.loadEventInfo(eventId)
+    // 首次拉列表交给 onShow：onLoad 之后它必定执行，放这里可以避免重复请求
+  },
+
+  // 每次回到本页都重拉一次，建完队伍返回时才能立刻看到新队伍
+  onShow() {
+    if (!this.data.eventId) return
     this.refreshList()
   },
 

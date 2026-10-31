@@ -1,6 +1,7 @@
 // pages/team-create/team-create.js
-const { getOpenid } = require('../../utils/auth')
-
+// 建队的所有写操作都在云函数 teamCreate 里完成：编号自增、人数上限、队长快照
+// 全部由服务端计算，前端只负责收集用户填写的文本。
+// 下面的本地校验只为即时反馈，云端会再校验一遍。
 Page({
   data: {
     eventId: '',
@@ -25,9 +26,8 @@ Page({
   },
 
   async loadEventInfo(eventId) {
-    const db = wx.cloud.database()
     try {
-      const res = await db.collection('events').doc(eventId).get()
+      const res = await wx.cloud.database().collection('events').doc(eventId).get()
       const event = res.data
       const maxSize = event.maxTeamSize || 3
       this.setData({
@@ -86,6 +86,10 @@ Page({
       userDesc
     } = this.data
 
+    if (!eventId) {
+      wx.showToast({ title: '缺少赛事参数', icon: 'none' })
+      return
+    }
     if (!teamName.trim()) {
       wx.showToast({ title: '请输入队伍名称', icon: 'none' })
       return
@@ -108,120 +112,60 @@ Page({
     }
 
     this.setData({ isSubmitting: true })
+    wx.showLoading({ title: '创建中...', mask: true })
 
     try {
-      // 身份只能由云函数给出。拿不到就中止，绝不写入伪造的 openid——
-      // 否则这条队伍的 creatorOpenid 对不上任何人，队长本人都无法再管理它。
-      const openid = await getOpenid()
-      if (!openid) {
-        this.setData({ isSubmitting: false })
-        wx.showModal({
-          title: '身份获取失败',
-          content: '没能获取到你的微信身份，请检查网络后重试。',
-          showCancel: false
-        })
-        return
-      }
+      // 不再需要前端取 openid、查用户资料、算下一个编号：
+      // 这些都交给云函数，客户端也没法再篡改名额或冒用队长身份。
+      const res = await wx.cloud.callFunction({
+        name: 'teamCreate',
+        data: {
+          action: 'create',
+          eventId: eventId,
+          teamName: teamName.trim(),
+          maxSize: parseInt(sizeOptions[sizeIndex]),
+          description: description.trim(),
+          contact: contact.trim(),
+          userDesc: userDesc.trim()
+        }
+      })
 
-      const userInfo = await this.getUserProfile(openid)
-      if (!userInfo) {
-        this.setData({ isSubmitting: false })
-        wx.showModal({
-          title: '提示',
-          content: '请先完善个人信息（昵称、年级）后再创建队伍',
-          confirmText: '去填写',
-          success: (res) => {
-            if (res.confirm) {
-              wx.navigateTo({
-                url: '/pages/profile/profile'
-              })
-            }
-          }
-        })
-        return
-      }
-
-      wx.showLoading({ title: '创建中...' })
-      const maxTeamSize = parseInt(sizeOptions[sizeIndex])
-      const nextNumber = await this.getNextTeamNumber(eventId)
-
-      const db = wx.cloud.database()
-      const teamData = {
-        eventId: eventId,
-        teamNumber: nextNumber,
-        teamName: teamName.trim(),
-        description: description.trim(),
-        contact: contact.trim(),
-        maxSize: maxTeamSize,
-        isFull: false,
-        members: [{
-          openid: openid,
-          name: userInfo.nickName,
-          grade: userInfo.grade || '',
-          avatar: userInfo.avatarUrl || '👤',
-          role: '队长',
-          isLeader: true,
-          desc: userDesc.trim() || ''
-        }],
-        creatorOpenid: openid,
-        createTime: new Date()
-      }
-
-      await db.collection('teams_event').add({ data: teamData })
-
+      const result = (res && res.result) || {}
       wx.hideLoading()
-      wx.showToast({ title: '创建成功！', icon: 'success' })
 
+      if (!result.ok) {
+        this.handleFail(result)
+        return
+      }
+
+      wx.showToast({ title: '创建成功！', icon: 'success' })
       setTimeout(() => {
         wx.navigateBack()
       }, 1500)
-
     } catch (err) {
       console.error('创建队伍失败:', err)
       wx.hideLoading()
-      wx.showToast({ title: '创建失败，请重试', icon: 'none' })
+      wx.showToast({ title: '网络异常，请重试', icon: 'none' })
     } finally {
       this.setData({ isSubmitting: false })
     }
   },
 
-  // 资料不完整时返回 null，由调用方引导去完善
-  async getUserProfile(openid) {
-    try {
-      const db = wx.cloud.database()
-      const result = await db.collection('users').where({
-        _openid: openid
-      }).get()
-
-      if (result.data.length === 0) return null
-
-      const user = result.data[0]
-      if (!user.nickName || !user.grade) return null
-
-      return {
-        nickName: user.nickName,
-        grade: user.grade,
-        bio: user.bio || '',
-        avatarUrl: user.avatarUrl || ''
-      }
-    } catch (err) {
-      console.error('获取用户信息失败:', err)
-      return null
+  handleFail(result) {
+    // 资料不全由云端判定，这里负责把用户送到填写页面
+    if (result.code === 'PROFILE_INCOMPLETE') {
+      wx.showModal({
+        title: '提示',
+        content: result.message || '请先完善个人信息（昵称、年级）后再创建队伍',
+        confirmText: '去填写',
+        success: (res) => {
+          if (res.confirm) {
+            wx.navigateTo({ url: '/pages/profile/profile' })
+          }
+        }
+      })
+      return
     }
-  },
-
-  async getNextTeamNumber(eventId) {
-    const db = wx.cloud.database()
-    try {
-      const res = await db.collection('teams_event')
-        .where({ eventId: eventId })
-        .orderBy('teamNumber', 'desc')
-        .limit(1)
-        .get()
-      return res.data.length === 0 ? 0 : res.data[0].teamNumber + 1
-    } catch (err) {
-      console.error('获取队伍编号失败:', err)
-      return 0
-    }
+    wx.showToast({ title: result.message || '创建失败，请重试', icon: 'none' })
   }
 })
