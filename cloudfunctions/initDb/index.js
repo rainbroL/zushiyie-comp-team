@@ -1,6 +1,8 @@
 // cloudfunctions/initDb/index.js
 // 一次性初始化：建集合 + 灌演示数据。
 // 幂等设计：所有文档使用固定 _id，重复执行是覆盖而非堆积。
+// 权限：仅 INIT_DB_OWNERS 环境变量里的 openid 可调用，其余一律 FORBIDDEN。
+//      上线前应直接删除本云函数，演示数据也不该留在生产环境。
 const cloud = require('wx-server-sdk')
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV })
 const db = cloud.database()
@@ -315,8 +317,45 @@ async function seed(payload) {
   }
 }
 
+// 允许执行 seed / status 的 openid 白名单，取自云函数环境变量 INIT_DB_OWNERS。
+// 放进环境变量而不是写死在这里，是为了让仓库里不出现任何真实身份信息。
+function allowedOwners() {
+  return (process.env.INIT_DB_OWNERS || '')
+    .split(',')
+    .map(s => s.trim())
+    .filter(Boolean)
+}
+
 exports.main = async (event = {}) => {
   const action = event.action || 'seed'
+  const { OPENID } = cloud.getWXContext()
+
+  // whoami 不鉴权：调用者只能拿到自己的 openid，没有越权问题。
+  // 用途是首次部署后查出自己的 openid，填进 INIT_DB_OWNERS。
+  if (action === 'whoami') {
+    return {
+      ok: true,
+      action,
+      openid: OPENID || '',
+      tip: '把 openid 填进云函数的 INIT_DB_OWNERS 环境变量，之后才能执行 seed'
+    }
+  }
+
+  // 核心闸门：initDb 会覆盖演示数据，绝不能允许任意小程序用户调用
+  const owners = allowedOwners()
+  if (!owners.includes(OPENID)) {
+    console.warn('[initDb] 拒绝未授权调用', { action, openid: OPENID || '(空)' })
+    return {
+      ok: false,
+      action,
+      code: 'FORBIDDEN',
+      message: owners.length
+        ? 'initDb 仅限管理员调用，当前 openid 不在 INIT_DB_OWNERS 白名单内'
+        : '尚未配置白名单：请先在云函数环境变量里设置 INIT_DB_OWNERS',
+      openid: OPENID || '(空，说明不是在模拟器/真机里调用，取不到 OPENID)'
+    }
+  }
+
   try {
     if (action === 'status') {
       const counts = {}
