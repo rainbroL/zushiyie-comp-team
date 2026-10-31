@@ -32,7 +32,7 @@
 ## 目录结构
 
 ```
-program/
+zushiyie-comp-team/
 ├── cloudfunctions/
 │   ├── teamApply/              # 入队申请与审核（核心业务云函数）
 │   └── getUserOpenId/          # 获取当前用户 openid
