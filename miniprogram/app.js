@@ -2,7 +2,7 @@
 App({
   globalData: {
     // 云开发环境 ID，换环境时只改这一处
-    env: 'cloud1-d2gjzp3gs546da150'
+    env: 'cloud1-d5gmo9hjqac778817'
   },
 
   onLaunch() {
