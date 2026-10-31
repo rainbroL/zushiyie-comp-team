@@ -27,15 +27,16 @@
 
 ## 界面预览
 
-| 首页 | 队伍列表 |
-| :---: | :---: |
-| <img src="docs/screenshots/01-home.jpg" width="320" /> | <img src="docs/screenshots/02-team-list.jpg" width="320" /> |
-| **首页**：赛事入口与「我的队伍」聚合 | **队伍列表**：`#编号` 检索、满员筛选、队伍卡成员预览 |
-
-| 队伍详情（已提交申请） | 队长审核 |
-| :---: | :---: |
-| <img src="docs/screenshots/03-team-detail.jpg" width="320" /> | <img src="docs/screenshots/04-audit.jpg" width="320" /> |
-| **队伍详情**：申请后按钮变「审核中」，可撤回；联系方式对非成员显示为锁定态 | **队长审核**：名额进度、申请人留言、同意 / 拒绝 |
+<table>
+<tr>
+<td width="50%" align="center" valign="top"><img src="docs/screenshots/01-home.jpg" width="300" /><br /><sub><b>首页</b>：赛事入口与「我的队伍」聚合</sub></td>
+<td width="50%" align="center" valign="top"><img src="docs/screenshots/02-team-list.jpg" width="300" /><br /><sub><b>队伍列表</b>：<code>#编号</code> 检索、满员筛选</sub></td>
+</tr>
+<tr>
+<td width="50%" align="center" valign="top"><img src="docs/screenshots/03-team-detail.jpg" width="300" /><br /><sub><b>队伍详情</b>：审核中状态，联系方式对非成员锁定</sub></td>
+<td width="50%" align="center" valign="top"><img src="docs/screenshots/04-audit.jpg" width="300" /><br /><sub><b>队长审核</b>：名额进度、留言、同意 / 拒绝</sub></td>
+</tr>
+</table>
 
 四张图连起来是一条完整路径：**发现赛事 → 筛选队伍 → 提交申请 → 队长处理**。
 
