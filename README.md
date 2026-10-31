@@ -23,17 +23,6 @@
 | 个人信息 | ✅ | 昵称、年级、简介，申请前强制补全 |
 | 消息通知 | 🚧 | 见 Roadmap |
 
-## 界面预览
-
-截图放在 `docs/screenshots/` 后，把下面几行的注释去掉即可在 GitHub 上显示：
-
-```markdown
-![首页](docs/screenshots/01-home.png)
-![队伍列表](docs/screenshots/02-team-list.png)
-![队伍详情](docs/screenshots/03-team-detail.png)
-![队长审核](docs/screenshots/04-audit.png)
-```
-
 ## 技术栈
 
 - 微信小程序原生框架（WXML / WXSS / JavaScript），无第三方 UI 库
