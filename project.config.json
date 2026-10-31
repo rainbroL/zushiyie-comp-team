@@ -46,7 +46,7 @@
   },
   "appid": "wx82d7839f91baeeec",
   "projectname": "zushiyie-comp-team",
-  "libVersion": "2.20.1",
+  "libVersion": "3.16.2",
   "cloudfunctionTemplateRoot": "cloudfunctionTemplate/",
   "condition": {
     "search": {
