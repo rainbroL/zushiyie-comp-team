@@ -23,11 +23,25 @@
 | 个人信息 | ✅ | 昵称、年级、简介，申请前强制补全 |
 | 消息通知 | 🚧 | 见 Roadmap |
 
+## 界面预览
+
+| 首页 | 队伍列表 |
+| :---: | :---: |
+| <img src="docs/screenshots/01-home.jpg" width="320" /> | <img src="docs/screenshots/02-team-list.jpg" width="320" /> |
+| **首页**：赛事入口与「我的队伍」聚合 | **队伍列表**：`#编号` 检索、满员筛选、队伍卡成员预览 |
+
+| 队伍详情（已提交申请） | 队长审核 |
+| :---: | :---: |
+| <img src="docs/screenshots/03-team-detail.jpg" width="320" /> | <img src="docs/screenshots/04-audit.jpg" width="320" /> |
+| **队伍详情**：申请后按钮变为「审核中」，可撤回 | **队长审核**：名额进度、申请人留言、同意 / 拒绝 |
+
+四张图连起来是一条完整路径：**发现赛事 → 筛选队伍 → 提交申请 → 队长处理**。
+
 ## 技术栈
 
 - 微信小程序原生框架（WXML / WXSS / JavaScript），无第三方 UI 库
 - 云开发：云数据库（文档型）、云函数、云存储
-- 基础库 `2.20.1`
+- 基础库 `3.16.2`
 
 ## 目录结构
 
@@ -35,7 +49,10 @@
 zushiyie-comp-team/
 ├── cloudfunctions/
 │   ├── teamApply/              # 入队申请与审核（核心业务云函数）
-│   └── getUserOpenId/          # 获取当前用户 openid
+│   ├── getUserOpenId/          # 获取当前用户 openid
+│   └── initDb/                 # 一次性初始化：建集合 + 灌演示数据
+├── docs/
+│   └── screenshots/            # 界面预览截图
 ├── miniprogram/
 │   ├── pages/
 │   │   ├── index/              # 首页导航
@@ -50,6 +67,7 @@ zushiyie-comp-team/
 │   │   └── auth.js             # 统一获取并缓存 openid
 │   └── app.js                  # 云开发环境初始化
 ├── .gitignore
+├── LICENSE
 └── project.config.json
 ```
 
@@ -146,18 +164,42 @@ globalData: {
 
 同时把自己的 `appid` 写进 `project.config.json`。
 
-### 3. 创建集合
+### 3. 部署云函数
 
-在云开发控制台 → 数据库中新建 4 个集合：
+三个云函数都要部署：`teamApply`、`getUserOpenId`、`initDb`。在 `cloudfunctions/` 下对应的三个目录分别右键 → **上传并部署：云端安装依赖**。
 
+也可以用命令行一次部署一个（需先在「设置 → 安全设置」里开启服务端口）：
+
+```bash
+cli cloud functions deploy --env <环境ID> --paths ./cloudfunctions/teamApply --appid <appid> --remote-npm-install
 ```
-users
-events
-teams_event
-applications
+
+> 函数刚创建时会处于 `Creating` 状态，此时上传代码会报「当前函数处于 Creating 状态」，等十几秒重试即可。
+
+### 4. 一键初始化数据库
+
+`initDb` 会自动建好 4 个集合，并写入 3 个赛事、8 支队伍、2 条待审核申请，省掉手工建表和造数据。
+
+在开发者工具主窗口的 **调试器 → Console** 里执行：
+
+```js
+wx.cloud.callFunction({ name: 'initDb' })
+  .then(r => console.log(JSON.stringify(r.result, null, 2)))
 ```
 
-### 4. 设置集合权限
+返回 `ok: true` 和四个集合的条数即为成功：
+
+```json
+{ "ok": true, "counts": { "users": 1, "events": 3, "teams_event": 8, "applications": 2 } }
+```
+
+脚本用固定 `_id` 写入，重复执行是覆盖而非堆积，随时可以再跑一次。
+
+> **必须在 Console 里调用。** 云函数面板的「测试」没有小程序上下文，`OPENID` 为空，演示队伍会被挂到一个占位身份上，「队长审核」那套权限就用不了。
+
+不想用演示数据的话，也可以在控制台手动建这四个集合，跳过这一步。
+
+### 5. 设置集合权限
 
 | 集合 | 权限 | 原因 |
 | --- | --- | --- |
@@ -168,28 +210,9 @@ applications
 
 > `applications` 选「所有用户不可读写」很关键——云函数用的是管理员权限，不受此限制，但客户端就再也拿不到别人的申请记录了。
 
-### 5. 部署云函数
+### 6. 编译运行
 
-在 `cloudfunctions/teamApply` 目录右键 → **上传并部署：云端安装依赖**。
-
-### 6. 灌入几条赛事数据
-
-在 `events` 集合里手动添加文档，字段参考上面「数据模型」，注意 `createTime` 要选**日期**类型：
-
-```json
-{
-  "title": "全国大学生数学建模竞赛",
-  "description": "三人一队，72 小时完成一篇建模论文。校内报名截止 9 月 20 日。",
-  "imageUrl": "",
-  "maxTeamSize": 3,
-  "canTeamUp": true,
-  "createTime": "2026-09-01T00:00:00.000Z"
-}
-```
-
-### 7. 编译运行
-
-先在「个人信息」页填好昵称和年级，再去赛事 → 队伍 → 申请加入，全流程即可跑通。
+编译后先在「个人信息」填好昵称和年级，再从赛事 → 队伍 → 申请加入走一遍完整流程。队长审核要换一个微信号（或在开发者工具的「多账号调试」里开第二个模拟器）才能看到真实申请。
 
 ## 安全设计
 
@@ -221,6 +244,7 @@ applications
 - **联系方式明文存储**，目前对所有能打开该队伍详情页的人可见，未做「仅成员可见」的限制
 - **队伍编号自增**采用「查最大值 + 1」，高并发下可能重号
 - 赛事数据依赖控制台手工维护，没有后台管理界面
+- `initDb` 会写入演示数据（虚构姓名与微信号），只适用于开发环境，上线前需清空集合
 - 没有消息通知，申请与审核结果需要用户自己回页面查看
 
 ## Roadmap
