@@ -306,3 +306,23 @@
   font-size: 22rpx;
   color: #b2bec3;
 }
+
+/* 非成员看到的占位提示：不用灰色小字，避免被当成「加载失败」 */
+.contact-locked {
+  display: flex;
+  align-items: center;
+  padding: 20rpx 24rpx;
+  background: #f7f6ff;
+  border-radius: 12rpx;
+}
+
+.lock-icon {
+  font-size: 26rpx;
+  margin-right: 12rpx;
+}
+
+.lock-text {
+  font-size: 26rpx;
+  color: #8b87a8;
+  line-height: 1.6;
+}

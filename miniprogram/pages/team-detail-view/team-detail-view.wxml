@@ -82,11 +82,17 @@
     </view>
   </view>
 
-  <!-- 队长联系方式 -->
-  <view class="card" wx:if="{{team.contact}}">
+  <!-- 队长联系方式：只有队长和已加入的成员能看到内容 -->
+  <view class="card">
     <view class="section-title">📞 队长联系方式</view>
-    <view class="section-content contact-text" bindtap="onCopyContact">{{team.contact}}</view>
-    <text class="copy-hint">点击可复制</text>
+    <block wx:if="{{canSeeContact && contact}}">
+      <view class="section-content contact-text" bindtap="onCopyContact">{{contact}}</view>
+      <text class="copy-hint">点击可复制</text>
+    </block>
+    <view class="contact-locked" wx:else>
+      <text class="lock-icon">🔒</text>
+      <text class="lock-text">{{contactHint}}</text>
+    </view>
   </view>
 
   <!-- 底部按钮 -->

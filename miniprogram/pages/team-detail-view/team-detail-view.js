@@ -19,6 +19,14 @@ const STATUS_TIP = {
   cancelled: '申请已撤回，如需加入请重新提交'
 }
 
+// 看不到联系方式时给的提示，按申请状态区分，免得用户以为页面坏了
+const CONTACT_HINT = {
+  none: '申请通过后可查看队长联系方式',
+  cancelled: '申请通过后可查看队长联系方式',
+  pending: '队长同意你的申请后即可查看',
+  rejected: '本次申请未通过，无法查看队长联系方式'
+}
+
 Page({
   data: {
     teamId: '',
@@ -31,6 +39,11 @@ Page({
     myStatus: 'none',
     statusTip: '',
     applications: [],
+
+    // 联系方式：只有队长和已通过审核的成员能拿到内容，其他人只有提示语
+    contact: '',
+    canSeeContact: false,
+    contactHint: '正在获取…',
 
     btnText: BTN_TEXT.none,
     btnDisabled: false,
@@ -97,22 +110,29 @@ Page({
       const result = res.result || {}
 
       if (!result.ok) {
+        this.setData({ canSeeContact: false, contact: '', contactHint: '暂时无法获取，请下拉刷新' })
         this.updateButton()
         return
       }
 
-      const { isLeader, myStatus, applications } = result.data
+      const { isLeader, myStatus, applications, contact, canSeeContact } = result.data
+      const status = myStatus || 'none'
 
       this.setData({
         isLeader: !!isLeader,
-        myStatus: myStatus || 'none',
-        statusTip: STATUS_TIP[myStatus] || '',
-        applications: applications || []
+        myStatus: status,
+        statusTip: STATUS_TIP[status] || '',
+        applications: applications || [],
+        contact: contact || '',
+        canSeeContact: !!canSeeContact,
+        contactHint: canSeeContact ? '' : CONTACT_HINT[status] || CONTACT_HINT.none
       })
 
       this.updateButton()
     } catch (err) {
       console.error('加载申请状态失败', err)
+      // 拿不到身份就不该展示联系方式，同时把占位文案换掉，避免一直停在「正在获取」
+      this.setData({ canSeeContact: false, contact: '', contactHint: '暂时无法获取，请下拉刷新' })
       this.updateButton()
     }
   },
@@ -324,9 +344,10 @@ Page({
     }
   },
 
+  // 联系方式只对队长和队员可见，非成员看到的是一段提示
   onCopyContact() {
-    const { team } = this.data
-    if (!team || !team.contact) return
-    wx.setClipboardData({ data: team.contact })
+    const { contact } = this.data
+    if (!contact) return
+    wx.setClipboardData({ data: contact })
   }
 })

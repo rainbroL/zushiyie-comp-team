@@ -16,6 +16,7 @@
 | 队伍列表 | ✅ | 招募中 / 全部筛选、分页加载、`#编号` 搜索定位 |
 | 创建队伍 | ✅ | 编号与名额由服务端分配，队长信息自动写入 |
 | 队伍详情 | ✅ | 成员列表、队长标识、空位提示 |
+| **联系方式保护** | ✅ | 仅队长与已通过审核的成员可见，独立集合隔离，非成员响应里不带该字段 |
 | **申请加入** | ✅ | 留言申请、状态回显、重复申请拦截 |
 | **申请撤回** | ✅ | 提交后可撤回，撤回后可重新申请 |
 | **队长审核** | ✅ | 待处理申请列表、同意 / 拒绝、事务保证不超员 |
@@ -110,12 +111,13 @@ zushiyie-comp-team/
 | `teamNumber` | number | 队伍编号，列表里用 `#编号` 搜索 |
 | `teamName` | string | 队伍名称 |
 | `description` | string | 队伍描述 |
-| `contact` | string | 队长联系方式 |
 | `maxSize` | number | 人数上限 |
 | `isFull` | boolean | 是否满员 |
 | `members` | array | 成员数组，元素见下 |
 | `creatorOpenid` | string | 队长 openid，**所有权限校验的依据** |
 | `createTime` | Date | |
+
+> 这里**没有** `contact` 字段。联系方式放在 `team_contacts`，否则会跟着可读集合一起公开。
 
 `members[]` 元素结构：
 
@@ -152,6 +154,18 @@ none ──申请──> pending ──同意──> approved（写入 members�
                   ├──拒绝──> rejected ──重新申请──> pending
                   └──撤回──> cancelled ──重新申请──> pending
 ```
+
+### `team_contacts` — 队长联系方式
+
+| 字段 | 类型 | 说明 |
+| --- | --- | --- |
+| `_id` | string | 等于 `teamId`，一队一条 |
+| `teamId` | string | 所属队伍 |
+| `contact` | string | 队长微信 / QQ / 手机号 |
+| `creatorOpenid` | string | 队长 openid，迁移与排查用 |
+| `createTime` | Date | |
+
+单独建一个集合、并把权限设为「所有用户不可读写」，是因为队伍列表本身必须公开可读——联系方式若留在 `teams_event` 里，任何人打开 Console 就能批量拉走所有队长的微信号。读取只走 `teamApply` 的 `context` 动作，云函数先判定「你是不是队长或已通过审核的成员」，不是就不在响应里返回这个字段，抓包也拿不到。
 
 ## 快速开始
 
@@ -191,7 +205,7 @@ cli cloud functions deploy --env <环境ID> --paths ./cloudfunctions/teamApply -
 
 ### 4. 一键初始化数据库
 
-`initDb` 会自动建好 4 个集合并写入演示数据，省掉手工建表和造数据。
+`initDb` 会自动建好 5 个集合并写入演示数据，省掉手工建表和造数据。
 
 因为它会**覆盖**已有文档，默认只允许白名单里的 openid 调用。分三步：
 
@@ -221,30 +235,40 @@ wx.cloud.callFunction({ name: 'initDb' })
   .then(r => console.log(JSON.stringify(r.result, null, 2)))
 ```
 
-返回 `ok: true` 和四个集合的条数即为成功：
+返回 `ok: true` 和五个集合的条数即为成功：
 
 ```json
-{ "ok": true, "counts": { "users": 1, "events": 3, "teams_event": 8, "applications": 2 } }
+{ "ok": true, "counts": { "users": 1, "events": 3, "teams_event": 8, "applications": 2, "team_contacts": 8 } }
 ```
 
 脚本用固定 `_id` 写入，重复执行是覆盖而非堆积，随时可以再跑一次。
+
+> **从旧版本升级时多跑一步。** 早期版本把联系方式存在 `teams_event.contact` 里，现在拆到了 `team_contacts`。执行下面这条把存量数据搬过去（幂等，没有可搬的会返回 `moved: 0`）：
+>
+> ```js
+> wx.cloud.callFunction({ name: 'initDb', data: { action: 'migrateContacts' } })
+>   .then(r => console.log(r.result))
+> ```
+>
+> 迁移完成后记得把 `team_contacts` 的权限设为「所有用户不可读写」，否则拆出去也没意义。
 
 > **必须在 Console 里调用。** 云函数面板的「测试」没有小程序上下文，`OPENID` 为空，会被白名单直接拒绝（同时也就不会再出现「演示队伍挂到占位身份上」的老问题）。
 
 > 返回 `{ ok: false, code: 'FORBIDDEN' }` 说明当前 openid 不在 `INIT_DB_OWNERS` 里，或者环境变量改完还没生效——重新编译一次，必要时重进 `initDb` 的函数配置确认变量已保存。
 
-不想用演示数据的话，也可以在控制台手动建这四个集合，跳过这一步。
+不想用演示数据的话，也可以在控制台手动建这五个集合，跳过这一步。
 
 ### 5. 设置集合权限
 
 | 集合 | 权限 | 原因 |
 | --- | --- | --- |
 | `events` | 所有用户可读，仅创建者可读写 | 所有用户都要能看到赛事，写入只由 `initDb`（管理员权限）完成 |
-| `teams_event` | 所有用户可读，仅创建者可读写 | 创建队伍目前由前端直接写入，靠 `_openid` 判定创建者 |
+| `teams_event` | 所有用户可读，仅创建者可读写 | 队伍列表必须公开；联系方式已拆到 `team_contacts`，这里不再有敏感字段 |
 | `applications` | **所有用户不可读写** | 只允许云函数访问，杜绝越权读申请 |
+| `team_contacts` | **所有用户不可读写** | 只允许云函数访问，联系方式仅对队长和已通过审核的成员返回 |
 | `users` | 仅创建者可读写（默认） | 前端只读自己的资料；队友信息是快照存在队伍文档的 `members` 里，不依赖读他人的 `users` |
 
-> `applications` 选「所有用户不可读写」很关键——云函数用的是管理员权限，不受此限制，但客户端就再也拿不到别人的申请记录了。
+> `applications` 和 `team_contacts` 选「所有用户不可读写」很关键——云函数用的是管理员权限，不受此限制，但客户端就再也拿不到别人的申请记录和队长联系方式了。
 
 > **两个高频坑：**
 >
@@ -290,6 +314,12 @@ wx.cloud.callFunction({ name: 'initDb' })
 - 编号从赛事文档的 `teamCount` 计数器在事务里分配，并发建队不会重号
 - `maxSize` 以 `events.maxTeamSize` 封顶，客户端传多大都只能取小
 - 队长昵称和年级从 `users` 集合取，前端传的身份参数一概不采信
+
+**8. 联系方式不随列表暴露**
+
+`teams_event` 是「所有用户可读」，联系方式如果跟着放在里面，任何人打开 Console 执行一句 `.get()` 就能把全校队长的微信号拉走——把页面上的文字藏起来也没用，数据已经在客户端手里了。
+
+所以 `contact` 单独存进 `team_contacts`（权限「所有用户不可读写」），只由 `teamApply` 的 `context` 动作读取，并且**只在调用者是队长或已通过审核的成员时**才写进响应。非成员拿到的响应里根本没有这个字段，抓包也看不到。前端无权限时展示的是「申请通过后可查看」，不是把真实内容隐藏起来。
 
 ## 内容审核
 
@@ -345,7 +375,7 @@ node scripts/test-moderation.js
 
 ## 已知限制
 
-- **联系方式明文存储**，目前对所有能打开该队伍详情页的人可见，未做「仅成员可见」的限制
+- **联系方式仍是明文存储**（未加密），泄露风险已由「仅队员可见」控制，但数据库管理员和云函数日志仍能看到原文
 - **内容审核挡不住刻意规避**：同音字、拼音、emoji 替代都能绕过本地规则；官方接口对「拉人加微信」这类内容判为正常。真正的兜底是举报入口 + 人工处理，这部分还没做
 - **没有图片上传**，所以二维码引流目前只能靠文字引导；将来若支持发图，需要补 `imgSecCheck`
 - 赛事数据依赖控制台手工维护，没有后台管理界面

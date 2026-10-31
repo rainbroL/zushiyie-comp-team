@@ -18,7 +18,10 @@ const db = cloud.database()
 const COLL = {
   EVENTS: 'events',
   TEAMS: 'teams_event',
-  USERS: 'users'
+  USERS: 'users',
+  // 联系方式单独存放：teams_event 是「所有用户可读」，
+  // 联系方式若跟着一起见人，队长的微信号就能被任何人批量拉走。
+  CONTACTS: 'team_contacts'
 }
 
 const MIN_SIZE = 2
@@ -181,7 +184,7 @@ async function handleCreate(openid, event) {
     teamNumber,
     teamName,
     description,
-    contact,
+    // 注意这里没有 contact：它写到 team_contacts，只有队员和队长能取到
     maxSize,
     isFull: members.length >= maxSize,
     members,
@@ -199,7 +202,25 @@ async function handleCreate(openid, event) {
     res = await db.collection(COLL.TEAMS).add({ data: teamData })
   }
 
-  return { teamId: res._id, teamNumber, maxSize }
+  const teamId = res._id
+
+  // 联系方式以 teamId 为主键单独存一份。写失败就把队伍回滚掉，
+  // 否则会出现「队伍建成了但联系不上队长」的死队，而页面没有编辑入口可以补救。
+  try {
+    await db.collection(COLL.CONTACTS).doc(teamId).set({
+      data: { teamId, contact, creatorOpenid: openid, createTime: new Date() }
+    })
+  } catch (err) {
+    console.error('[teamCreate] 联系方式写入失败，回滚队伍', teamId, err && err.errMsg)
+    try {
+      await db.collection(COLL.TEAMS).doc(teamId).remove()
+    } catch (rollbackErr) {
+      console.error('[teamCreate] 回滚失败，需人工删除', teamId, rollbackErr && rollbackErr.errMsg)
+    }
+    throw new BizError('CREATE_FAILED')
+  }
+
+  return { teamId, teamNumber, maxSize }
 }
 
 exports.main = async (event = {}) => {

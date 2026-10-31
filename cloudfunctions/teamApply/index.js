@@ -18,7 +18,9 @@ const db = cloud.database()
 const COLL = {
   TEAMS: 'teams_event',
   USERS: 'users',
-  APPLICATIONS: 'applications'
+  APPLICATIONS: 'applications',
+  // 联系方式与队伍信息分开存放，只有队长和已通过审核的成员能取到
+  CONTACTS: 'team_contacts'
 }
 
 const STATUS = {
@@ -270,6 +272,7 @@ async function handleContext(openid, event) {
   if (!team) throw new BizError('TEAM_NOT_FOUND')
 
   const isLeader = team.creatorOpenid === openid
+  const isMember = isMemberOf(team, openid)
   const myApplication = await getDocOrNull(
     COLL.APPLICATIONS,
     buildApplicationId(teamId, openid)
@@ -289,9 +292,20 @@ async function handleContext(openid, event) {
     )
   }
 
+  // 联系方式只对队长和队员返回。这里不能只依赖前端隐藏：
+  // 返回给非成员的响应里根本不带 contact，抓包也拿不到。
+  let contact = ''
+  if (isLeader || isMember) {
+    const contactDoc = await getDocOrNull(COLL.CONTACTS, teamId)
+    // 兼容未迁移的队伍：老数据把 contact 存在队伍文档里
+    contact = (contactDoc && contactDoc.contact) || team.contact || ''
+  }
+
   return {
     isLeader,
-    isMember: isMemberOf(team, openid),
+    isMember,
+    contact,
+    canSeeContact: !!(isLeader || isMember),
     myStatus: myApplication ? myApplication.status : 'none',
     memberCount: (team.members || []).length,
     applications

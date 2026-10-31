@@ -11,7 +11,8 @@ const COLL = {
   USERS: 'users',
   EVENTS: 'events',
   TEAMS: 'teams_event',
-  APPS: 'applications'
+  APPS: 'applications',
+  CONTACTS: 'team_contacts'
 }
 
 const MINE = 'seed_team_mine'
@@ -250,7 +251,20 @@ async function seed(payload) {
   ]
 
   for (const item of teams) {
-    await db.collection(COLL.TEAMS).doc(item._id).set({ data: withoutId(item) })
+    // 联系方式与队伍拆开写：teams_event 是「所有用户可读」，contact 留在里面
+    // 就等于把队长微信号公开给任何人。
+    const { contact, ...teamBody } = item
+    await db.collection(COLL.TEAMS).doc(item._id).set({ data: withoutId(teamBody) })
+    if (contact) {
+      await db.collection(COLL.CONTACTS).doc(item._id).set({
+        data: {
+          teamId: item._id,
+          contact,
+          creatorOpenid: item.creatorOpenid || '',
+          createTime: item.createTime || new Date()
+        }
+      })
+    }
   }
 
   // ---------- 4. 指向「我的队」的待处理申请 ----------
@@ -317,6 +331,59 @@ async function seed(payload) {
   }
 }
 
+// ---------- 联系方式迁移 ----------
+// 早期版本把 contact 存在 teams_event 里，而该集合是「所有用户可读」，
+// 等于把队长微信号公开。这个动作把 contact 搬到 team_contacts 并从队伍文档删除。
+// 幂等：只处理还带 contact 字段的队伍，重复执行会直接返回 moved: 0。
+async function migrateContacts() {
+  const _ = db.command
+  // team_contacts 可能是新建的，先确保存在（已存在会被忽略）
+  const collections = await ensureCollections()
+  let moved = 0
+
+  // 每轮把匹配到的搬走，下一轮查询自然只剩没搬的，不依赖 offset 翻页
+  for (let round = 0; round < 50; round++) {
+    const res = await db.collection(COLL.TEAMS)
+      .where({ contact: _.exists(true) })
+      .limit(100)
+      .get()
+
+    if (!res.data.length) break
+
+    for (const team of res.data) {
+      const contact = String(team.contact || '').trim()
+      if (contact) {
+        await db.collection(COLL.CONTACTS).doc(team._id).set({
+          data: {
+            teamId: team._id,
+            contact,
+            creatorOpenid: team.creatorOpenid || '',
+            createTime: team.createTime || new Date()
+          }
+        })
+        moved++
+      }
+      await db.collection(COLL.TEAMS).doc(team._id).update({
+        data: { contact: _.remove() }
+      })
+    }
+
+    if (res.data.length < 100) break
+  }
+
+  const total = await db.collection(COLL.CONTACTS).count()
+  return {
+    ok: true,
+    action: 'migrateContacts',
+    collections,
+    moved,
+    contactDocs: total.total,
+    tip: moved
+      ? `已迁移 ${moved} 条联系方式到 team_contacts 并清理原字段`
+      : '没有需要迁移的队伍（contact 字段已全部清除或本来就没有）'
+  }
+}
+
 // 允许执行 seed / status 的 openid 白名单，取自云函数环境变量 INIT_DB_OWNERS。
 // 放进环境变量而不是写死在这里，是为了让仓库里不出现任何真实身份信息。
 function allowedOwners() {
@@ -369,6 +436,11 @@ exports.main = async (event = {}) => {
       }
       return { ok: true, counts }
     }
+
+    if (action === 'migrateContacts') {
+      return await migrateContacts()
+    }
+
     return await seed(event)
   } catch (err) {
     console.error('[initDb] 失败', action, err)
@@ -376,7 +448,7 @@ exports.main = async (event = {}) => {
       ok: false,
       action,
       error: err.message || String(err),
-      hint: '若提示集合不存在或权限错误，请先在云开发控制台手动建好四个集合'
+      hint: '若提示集合不存在或权限错误，请先在云开发控制台手动建好五个集合'
     }
   }
 }
