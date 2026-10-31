@@ -11,6 +11,8 @@ const cloud = require('wx-server-sdk')
 
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV })
 
+const { moderateText } = require('./moderation')
+
 const db = cloud.database()
 
 const COLL = {
@@ -39,13 +41,16 @@ const ERR_TEXT = {
   NAME_REQUIRED: '请填写队伍名称',
   DESC_REQUIRED: '请填写队伍描述',
   CONTACT_REQUIRED: '请填写联系方式',
+  CONTENT_REJECTED: '内容不合规，请修改后再试',
   CREATE_FAILED: '创建失败，请稍后重试'
 }
 
 class BizError extends Error {
-  constructor(code) {
-    super(ERR_TEXT[code] || code)
+  constructor(code, message) {
+    super(message || ERR_TEXT[code] || code)
     this.code = code
+    // 审核类错误需要把「具体哪里不合规」带回前端，所以允许覆盖默认文案
+    this.customMessage = message || ''
   }
 }
 
@@ -53,8 +58,8 @@ function ok(data) {
   return { ok: true, data: data || {} }
 }
 
-function fail(code) {
-  return { ok: false, code, message: ERR_TEXT[code] || '操作失败' }
+function fail(code, message) {
+  return { ok: false, code, message: message || ERR_TEXT[code] || '操作失败' }
 }
 
 async function getDocOrNull(collection, id) {
@@ -139,6 +144,18 @@ async function handleCreate(openid, event) {
   if (!description) throw new BizError('DESC_REQUIRED')
   if (!contact) throw new BizError('CONTACT_REQUIRED')
 
+  // 内容审核放在分配编号之前：被拦下的请求不应该消耗掉一个队伍编号
+  const review = await moderateText({
+    texts: [
+      { field: 'teamName', value: teamName, mode: 'shape' },
+      { field: 'description', value: description, mode: 'full' },
+      { field: 'userDesc', value: userDesc, mode: 'shape' },
+      { field: 'contact', value: contact, mode: 'contact' }
+    ],
+    openid
+  })
+  if (!review.ok) throw new BizError('CONTENT_REJECTED', review.hint)
+
   // 人数上限以赛事配置封顶，客户端只能在上限内选小，不能自己放大
   const eventMax = Number(targetEvent.maxTeamSize) || 3
   const wanted = Number(event.maxSize) || Math.min(3, eventMax)
@@ -196,7 +213,9 @@ exports.main = async (event = {}) => {
     const data = await handleCreate(OPENID, event)
     return ok(data)
   } catch (err) {
-    if (err && err.code && ERR_TEXT[err.code]) return fail(err.code)
+    if (err && err.code && ERR_TEXT[err.code]) {
+      return fail(err.code, err.customMessage)
+    }
     console.error('[teamCreate] 执行失败', action, err)
     return fail('CREATE_FAILED')
   }

@@ -1,0 +1,9 @@
+{
+  "name": "userSave",
+  "version": "1.0.0",
+  "description": "组师爺 · 保存个人资料（含内容审核）",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~2.4.0"
+  }
+}

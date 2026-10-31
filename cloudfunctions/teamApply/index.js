@@ -11,6 +11,8 @@ const cloud = require('wx-server-sdk')
 
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV })
 
+const { moderateText } = require('./moderation')
+
 const db = cloud.database()
 
 const COLL = {
@@ -38,14 +40,17 @@ const ERR_TEXT = {
   NOT_LEADER: '只有队长可以处理申请',
   APPLICATION_NOT_FOUND: '申请记录不存在',
   APPLICATION_HANDLED: '该申请已被处理',
+  CONTENT_REJECTED: '内容不合规，请修改后再试',
   DB_ERROR: '服务开小差了，请稍后重试'
 }
 
 // 业务异常：能被 main 捕获并原样返回给前端
 class BizError extends Error {
-  constructor(code) {
-    super(ERR_TEXT[code] || code)
+  constructor(code, message) {
+    super(message || ERR_TEXT[code] || code)
     this.code = code
+    // 审核类错误要带回「具体哪里不合规」，所以允许覆盖默认文案
+    this.customMessage = message || ''
   }
 }
 
@@ -53,8 +58,8 @@ function ok(data) {
   return { ok: true, data: data || {} }
 }
 
-function fail(code) {
-  return { ok: false, code, message: ERR_TEXT[code] || '操作失败' }
+function fail(code, message) {
+  return { ok: false, code, message: message || ERR_TEXT[code] || '操作失败' }
 }
 
 // 同一人对同一队伍的申请固定为一个文档，重复申请会被数据库直接挡住
@@ -113,6 +118,15 @@ async function handleApply(openid, event) {
     if (exist.status === STATUS.APPROVED) throw new BizError('ALREADY_MEMBER')
   }
 
+  const cleanedMessage = String(message || '').trim().slice(0, 80)
+
+  // 申请留言是广告和站外引流的高发区，写入前先过一遍
+  const review = await moderateText({
+    texts: [{ field: 'message', value: cleanedMessage, mode: 'full' }],
+    openid
+  })
+  if (!review.ok) throw new BizError('CONTENT_REJECTED', review.hint)
+
   const payload = {
     teamId,
     eventId: team.eventId || '',
@@ -125,7 +139,7 @@ async function handleApply(openid, event) {
       desc: user.bio || '',
       avatar: user.avatarUrl || '👤'
     },
-    message: String(message || '').trim().slice(0, 80),
+    message: cleanedMessage,
     status: STATUS.PENDING,
     createTime: new Date(),
     handleTime: null,
@@ -317,7 +331,7 @@ exports.main = async (event) => {
   } catch (err) {
     // 事务可能会把业务异常重新包装，这里按 code 判断而不是 instanceof
     if (err && err.code && ERR_TEXT[err.code]) {
-      return fail(err.code)
+      return fail(err.code, err.customMessage)
     }
     console.error('[teamApply] 执行失败', action, err)
     return fail('DB_ERROR')

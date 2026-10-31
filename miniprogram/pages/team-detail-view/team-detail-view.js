@@ -199,6 +199,16 @@ Page({
       return
     }
 
+    // 留言被内容审核拦下时，message 里是具体建议，弹窗展示更清楚
+    if (code === 'CONTENT_REJECTED') {
+      wx.showModal({
+        title: '内容不合规',
+        content: message || '请修改后再试',
+        showCancel: false
+      })
+      return
+    }
+
     if (code === 'ALREADY_APPLIED' || code === 'ALREADY_MEMBER' || code === 'TEAM_FULL') {
       this.loadTeamDetail()
       this.loadContext()

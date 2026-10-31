@@ -152,6 +152,16 @@ Page({
   },
 
   handleFail(result) {
+    // 内容审核不通过时，message 里是具体的修改建议，用弹窗展示才看得全
+    if (result.code === 'CONTENT_REJECTED') {
+      wx.showModal({
+        title: '内容不合规',
+        content: result.message || '请修改后再试',
+        showCancel: false
+      })
+      return
+    }
+
     // 资料不全由云端判定，这里负责把用户送到填写页面
     if (result.code === 'PROFILE_INCOMPLETE') {
       wx.showModal({

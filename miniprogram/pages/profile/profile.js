@@ -69,41 +69,33 @@ Page({
     wx.showLoading({ title: '保存中...' })
 
     try {
-      const openid = await getOpenid()
-      if (!openid) {
-        wx.hideLoading()
-        this.setData({ isSaving: false })
-        wx.showToast({ title: '身份获取失败，请重试', icon: 'none' })
+      // 写入交给云函数：昵称和简介会展示给别人，必须在服务端过内容审核。
+      // 前端直连写库的话，任何拦截都可以被改一行代码绕过去。
+      const res = await wx.cloud.callFunction({
+        name: 'userSave',
+        data: {
+          nickName: nickName.trim(),
+          grade: gradeOptions[gradeIndex],
+          bio: bio.trim()
+        }
+      })
+
+      const result = (res && res.result) || {}
+      wx.hideLoading()
+
+      if (!result.ok) {
+        if (result.code === 'CONTENT_REJECTED') {
+          wx.showModal({
+            title: '内容不合规',
+            content: result.message || '请修改后再试',
+            showCancel: false
+          })
+          return
+        }
+        wx.showToast({ title: result.message || '保存失败，请重试', icon: 'none' })
         return
       }
 
-      const db = wx.cloud.database()
-      const userData = {
-        nickName: nickName.trim(),
-        grade: gradeOptions[gradeIndex],
-        bio: bio.trim(),
-        updatedAt: new Date()
-      }
-
-      // 检查用户是否已存在
-      const existResult = await db.collection('users').where({
-        _openid: openid
-      }).get()
-
-      if (existResult.data.length > 0) {
-        // 更新
-        await db.collection('users').doc(existResult.data[0]._id).update({
-          data: userData
-        })
-      } else {
-        // 新增
-        userData.createdAt = new Date()
-        await db.collection('users').add({
-          data: userData
-        })
-      }
-
-      wx.hideLoading()
       wx.showToast({ title: '保存成功', icon: 'success' })
 
       // 返回上一页
