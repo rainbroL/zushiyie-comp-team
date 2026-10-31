@@ -140,8 +140,7 @@ none ──申请──> pending ──同意──> approved（写入 members�
 
 ```js
 globalData: {
-  env: 'your-env-id',
-  userInfo: null
+  env: 'your-env-id'
 }
 ```
 
