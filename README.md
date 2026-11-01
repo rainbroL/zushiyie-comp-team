@@ -30,7 +30,7 @@
 
 <table>
 <tr>
-<td width="50%" align="center" valign="top"><img src="docs/screenshots/01-home.jpg" width="300" /><br /><sub><b>首页</b>：赛事入口与「我的队伍」聚合</sub></td>
+<td width="50%" align="center" valign="top"><img src="docs/screenshots/01-home.jpg" width="300" /><br /><sub><b>首页</b>：组队入口、消息铃铛与「我的队伍」聚合</sub></td>
 <td width="50%" align="center" valign="top"><img src="docs/screenshots/02-team-list.jpg" width="300" /><br /><sub><b>队伍列表</b>：<code>#编号</code> 检索、满员筛选</sub></td>
 </tr>
 <tr>
