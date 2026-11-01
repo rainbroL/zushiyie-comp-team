@@ -9,20 +9,23 @@ const BTN_TEXT = {
   pending: '审核中，等待队长回复',
   approved: '已加入该队伍',
   rejected: '申请未通过',
-  cancelled: '重新申请'
+  cancelled: '重新申请',
+  left: '重新申请'
 }
 
 const STATUS_TIP = {
   pending: '已提交申请，队长同意后你就能出现在成员列表里',
   approved: '你已是该队伍成员，可以联系队长约时间了',
   rejected: '队长未通过本次申请，可以联系队长了解具体原因',
-  cancelled: '申请已撤回，如需加入请重新提交'
+  cancelled: '申请已撤回，如需加入请重新提交',
+  left: '你已退出该队伍，如需加入请重新提交申请'
 }
 
 // 看不到联系方式时给的提示，按申请状态区分，免得用户以为页面坏了
 const CONTACT_HINT = {
   none: '申请通过后可查看队长联系方式',
   cancelled: '申请通过后可查看队长联系方式',
+  left: '申请通过后可查看队长联系方式',
   pending: '队长同意你的申请后即可查看',
   rejected: '本次申请未通过，无法查看队长联系方式'
 }
@@ -272,6 +275,47 @@ Page({
       wx.hideLoading()
       console.error('撤回申请失败', err)
       wx.showToast({ title: '撤回失败，请重试', icon: 'none' })
+    }
+  },
+
+  // ============ 退出队伍 ============
+  onQuitTeam() {
+    wx.showModal({
+      title: '退出队伍',
+      content: '退出后你会从成员列表移除，队长会收到通知。之后可以重新申请加入。',
+      confirmColor: '#e17055',
+      success: (res) => {
+        if (res.confirm) this.quitTeam()
+      }
+    })
+  },
+
+  async quitTeam() {
+    wx.showLoading({ title: '退出中...' })
+
+    try {
+      const res = await wx.cloud.callFunction({
+        name: 'teamApply',
+        data: { action: 'quit', teamId: this.data.teamId }
+      })
+      wx.hideLoading()
+
+      const result = res.result || {}
+      if (!result.ok) {
+        wx.showToast({ title: result.message || '退出失败', icon: 'none' })
+        this.loadContext()
+        return
+      }
+
+      this.setData({ myStatus: 'left', statusTip: STATUS_TIP.left })
+      this.updateButton()
+      this.loadTeamDetail()
+      this.loadContext()
+      wx.showToast({ title: '已退出队伍', icon: 'success' })
+    } catch (err) {
+      wx.hideLoading()
+      console.error('退出队伍失败', err)
+      wx.showToast({ title: '退出失败，请重试', icon: 'none' })
     }
   },
 

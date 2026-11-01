@@ -1,0 +1,138 @@
+/* pages/inbox/inbox.wxss */
+.page {
+  min-height: 100vh;
+  background: #f5f6fa;
+  padding: 24rpx 30rpx 60rpx;
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4rpx 8rpx 20rpx;
+}
+
+.topbar-text {
+  font-size: 26rpx;
+  color: #636e72;
+}
+
+.topbar-action {
+  font-size: 26rpx;
+  color: #667eea;
+}
+
+.msg-list {
+  display: flex;
+  flex-direction: column;
+  gap: 18rpx;
+}
+
+.msg-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 20rpx;
+  background: #fff;
+  border-radius: 20rpx;
+  padding: 26rpx 24rpx;
+  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.05);
+}
+
+.msg-card:active {
+  transform: scale(0.99);
+  opacity: 0.92;
+}
+
+/* 未读用左侧色条 + 浅底，不靠文字提示，扫一眼就能分辨 */
+.msg-card.unread {
+  background: #f7f8ff;
+  border-left: 6rpx solid #667eea;
+}
+
+.msg-icon {
+  width: 68rpx;
+  height: 68rpx;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: #eef0ff;
+  font-size: 34rpx;
+  line-height: 68rpx;
+  text-align: center;
+}
+
+.msg-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.msg-title-row {
+  display: flex;
+  align-items: center;
+  gap: 10rpx;
+}
+
+.msg-title {
+  font-size: 30rpx;
+  font-weight: bold;
+  color: #2d3436;
+}
+
+.dot {
+  width: 12rpx;
+  height: 12rpx;
+  border-radius: 50%;
+  background: #ff4757;
+}
+
+.msg-desc {
+  display: block;
+  margin-top: 8rpx;
+  font-size: 26rpx;
+  line-height: 1.5;
+  color: #636e72;
+}
+
+.msg-time {
+  display: block;
+  margin-top: 10rpx;
+  font-size: 22rpx;
+  color: #b2bec3;
+}
+
+.msg-arrow {
+  align-self: center;
+  font-size: 36rpx;
+  color: #b2bec3;
+}
+
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 180rpx;
+}
+
+.empty-icon {
+  font-size: 90rpx;
+  opacity: 0.45;
+}
+
+.empty-text {
+  margin-top: 26rpx;
+  font-size: 30rpx;
+  color: #636e72;
+}
+
+.empty-hint {
+  margin-top: 12rpx;
+  font-size: 24rpx;
+  color: #b2bec3;
+}
+
+.loading,
+.failed {
+  text-align: center;
+  padding-top: 60rpx;
+  font-size: 26rpx;
+  color: #b2bec3;
+}

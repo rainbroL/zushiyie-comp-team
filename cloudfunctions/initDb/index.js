@@ -12,7 +12,8 @@ const COLL = {
   EVENTS: 'events',
   TEAMS: 'teams_event',
   APPS: 'applications',
-  CONTACTS: 'team_contacts'
+  CONTACTS: 'team_contacts',
+  MESSAGES: 'messages'
 }
 
 const MINE = 'seed_team_mine'

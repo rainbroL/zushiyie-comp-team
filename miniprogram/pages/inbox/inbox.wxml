@@ -1,0 +1,42 @@
+<!-- pages/inbox/inbox.wxml -->
+<view class="page">
+
+  <!-- 未读汇总 + 一键已读 -->
+  <view class="topbar" wx:if="{{unreadTotal > 0}}">
+    <text class="topbar-text">{{unreadTotal}} 条未读</text>
+    <text class="topbar-action" bindtap="onMarkAll">全部已读</text>
+  </view>
+
+  <!-- 消息列表 -->
+  <view class="msg-list" wx:if="{{items.length > 0}}">
+    <view
+      class="msg-card {{item.read ? '' : 'unread'}}"
+      wx:for="{{items}}"
+      wx:key="id"
+      data-index="{{index}}"
+      bindtap="onTapItem"
+    >
+      <view class="msg-icon">{{item.icon}}</view>
+      <view class="msg-main">
+        <view class="msg-title-row">
+          <text class="msg-title">{{item.title}}</text>
+          <view class="dot" wx:if="{{!item.read}}"></view>
+        </view>
+        <text class="msg-desc">{{item.desc}}</text>
+        <text class="msg-time">{{item.timeText}}</text>
+      </view>
+      <text class="msg-arrow" wx:if="{{item.url}}">›</text>
+    </view>
+  </view>
+
+  <!-- 空状态 -->
+  <view class="empty" wx:elif="{{!loading}}">
+    <text class="empty-icon">🔔</text>
+    <text class="empty-text">还没有消息</text>
+    <text class="empty-hint">申请结果、队员变动都会出现在这里</text>
+  </view>
+
+  <view class="loading" wx:if="{{loading}}">加载中…</view>
+
+  <view class="failed" wx:if="{{failed && !loading}}">加载失败，下拉可重试</view>
+</view>

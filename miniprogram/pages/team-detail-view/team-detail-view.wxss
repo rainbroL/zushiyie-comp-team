@@ -220,6 +220,11 @@
   opacity: 0.7;
 }
 
+/* 退出队伍是破坏性操作，与「撤回申请」区分颜色 */
+.status-action.danger {
+  color: #e17055;
+}
+
 /* ===== 队长审核区 ===== */
 .empty-tip {
   font-size: 25rpx;

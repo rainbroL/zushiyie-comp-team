@@ -20,10 +20,11 @@
 | **申请加入** | ✅ | 留言申请、状态回显、重复申请拦截 |
 | **申请撤回** | ✅ | 提交后可撤回，撤回后可重新申请 |
 | **队长审核** | ✅ | 待处理申请列表、同意 / 拒绝、事务保证不超员 |
+| **退出队伍** | ✅ | 队员可主动退出，队长收到站内通知，之后可重新申请 |
 | **我的队伍** | ✅ | 聚合我发起的、我加入的队伍 |
 | 个人信息 | ✅ | 昵称、年级、简介，申请前强制补全 |
 | **内容审核** | ✅ | 建队、申请留言、个人资料落库前统一过本地规则 + 官方接口 |
-| 消息通知 | 🚧 | 见 Roadmap |
+| 站内消息 | ✅ | 申请结果、队员退出等通知；首页角标 + 独立消息页 |
 
 ## 界面预览
 
@@ -54,6 +55,7 @@ zushiyie-comp-team/
 │   ├── teamApply/              # 入队申请与审核（核心业务云函数）
 │   ├── teamCreate/             # 创建队伍（编号、名额、队长快照都由服务端算）
 │   ├── userSave/               # 保存个人资料（昵称与简介在此过内容审核）
+│   ├── messageCenter/          # 站内消息：列表、未读数、标记已读（只读，不写入）
 │   ├── getUserOpenId/          # 获取当前用户 openid
 │   ├── initDb/                 # 一次性初始化：建集合 + 灌演示数据
 │   └── checkOpenapi/           # 内容安全接口探路工具（验证完可删）
@@ -69,6 +71,7 @@ zushiyie-comp-team/
 │   │   ├── team-create/        # 创建队伍
 │   │   ├── team-detail-view/   # 队伍详情 / 申请加入 / 队长审核
 │   │   ├── my-teams/           # 我的队伍
+│   │   ├── inbox/              # 消息中心
 │   │   └── profile/            # 个人信息
 │   ├── utils/
 │   │   └── auth.js             # 统一获取并缓存 openid
@@ -153,7 +156,7 @@ zushiyie-comp-team/
 | `teamLeaderOpenid` | string | 队长 openid（冗余字段，便于后续按队长维度查询） |
 | `applicant` | object | 申请人信息快照 `{ openid, name, grade, desc, avatar }` |
 | `message` | string | 申请留言，上限 80 字 |
-| `status` | string | `pending` / `approved` / `rejected` / `cancelled` |
+| `status` | string | `pending` / `approved` / `rejected` / `cancelled` / `left`（主动退出） |
 | `createTime` / `handleTime` | Date | |
 | `handlerOpenid` | string | 处理人 openid |
 
@@ -161,9 +164,11 @@ zushiyie-comp-team/
 
 ```
 none ──申请──> pending ──同意──> approved（写入 members，占一个名额）
-                  │
+                  │                │
                   ├──拒绝──> rejected ──重新申请──> pending
                   └──撤回──> cancelled ──重新申请──> pending
+
+approved ──退出队伍──> left ──重新申请──> pending
 ```
 
 ### `team_contacts` — 队长联系方式
@@ -177,6 +182,27 @@ none ──申请──> pending ──同意──> approved（写入 members�
 | `createTime` | Date | |
 
 单独建一个集合、并把权限设为「所有用户不可读写」，是因为队伍列表本身必须公开可读——联系方式若留在 `teams_event` 里，任何人打开 Console 就能批量拉走所有队长的微信号。读取只走 `teamApply` 的 `context` 动作，云函数先判定「你是不是队长或已通过审核的成员」，不是就不在响应里返回这个字段，抓包也拿不到。
+
+### `messages` — 站内消息
+
+| 字段 | 类型 | 说明 |
+| --- | --- | --- |
+| `toOpenid` | string | 收件人。**所有查询都强制带上这个条件** |
+| `kind` | string | `apply_approved` / `apply_rejected` / `member_quit`，另预留 `team_kicked` / `team_dissolved` / `notice` |
+| `title` / `desc` | string | 标题 30 字、正文 60 字，服务端截断 |
+| `bizType` | string | `competition`，为后续拼车 / 运动 / 游戏预留 |
+| `target` | object | `{ page, query }`，前端照着跳，不认识 `kind` |
+| `read` | boolean | 已读标记 |
+| `createTime` | Date | |
+| `fromOpenid` / `refId` | string | 触发者与关联业务 id，排查用 |
+
+两种设计值得说明：
+
+**消息由云函数写入，页面只读。** 写入封装在 `teamApply/notify.js`（与 `moderation.js` 一样按函数复制），读取统一走 `messageCenter`。客户端只能拿到 `shape()` 里列出的字段，`fromOpenid` 这类内部信息不会外泄。
+
+**`target` 存放跳转目标，而不是让前端按 `kind` 硬编码。** 以后加拼车或游戏的组队页，后端把 `target.page` 换成对应路径即可，消息页一行都不用改——这是为「以后扩展到其他业务线」留的接口。
+
+写消息失败不会影响主流程：审核已经成功却因为通知写不进去而报错，代价比丢一条通知大得多，所以发送逻辑整体包在 try/catch 里。
 
 ## 快速开始
 
@@ -198,7 +224,7 @@ globalData: {
 
 ### 3. 部署云函数
 
-有五个云函数需要部署：`teamApply`、`teamCreate`、`userSave`、`getUserOpenId`、`initDb`。在 `cloudfunctions/` 下对应的目录分别右键 → **上传并部署：云端安装依赖**。
+有六个云函数需要部署：`teamApply`、`teamCreate`、`userSave`、`messageCenter`、`getUserOpenId`、`initDb`。在 `cloudfunctions/` 下对应的目录分别右键 → **上传并部署：云端安装依赖**。
 
 > 目录里还有个 `checkOpenapi`，它是验证「当前环境能否调用微信内容安全接口」的探路工具，跑一次就知道结果，不部署也不影响任何功能。
 >
@@ -277,9 +303,10 @@ wx.cloud.callFunction({ name: 'initDb' })
 | `teams_event` | 所有用户可读，仅创建者可读写 | 队伍列表必须公开；联系方式已拆到 `team_contacts`，这里不再有敏感字段 |
 | `applications` | **所有用户不可读写** | 只允许云函数访问，杜绝越权读申请 |
 | `team_contacts` | **所有用户不可读写** | 只允许云函数访问，联系方式仅对队长和已通过审核的成员返回 |
+| `messages` | **所有用户不可读写** | 只允许云函数访问，查询强制带 `toOpenid`，读不到别人的消息 |
 | `users` | 仅创建者可读写（默认） | 前端只读自己的资料；队友信息是快照存在队伍文档的 `members` 里，不依赖读他人的 `users` |
 
-> `applications` 和 `team_contacts` 选「所有用户不可读写」很关键——云函数用的是管理员权限，不受此限制，但客户端就再也拿不到别人的申请记录和队长联系方式了。
+> `applications`、`team_contacts`、`messages` 选「所有用户不可读写」很关键——云函数用的是管理员权限，不受此限制，但客户端就再也拿不到别人的申请记录、队长联系方式和消息了。
 
 > **两个高频坑：**
 >
@@ -331,6 +358,10 @@ wx.cloud.callFunction({ name: 'initDb' })
 `teams_event` 是「所有用户可读」，联系方式如果跟着放在里面，任何人打开 Console 执行一句 `.get()` 就能把全校队长的微信号拉走——把页面上的文字藏起来也没用，数据已经在客户端手里了。
 
 所以 `contact` 单独存进 `team_contacts`（权限「所有用户不可读写」），只由 `teamApply` 的 `context` 动作读取，并且**只在调用者是队长或已通过审核的成员时**才写进响应。非成员拿到的响应里根本没有这个字段，抓包也看不到。前端无权限时展示的是「申请通过后可查看」，不是把真实内容隐藏起来。
+
+**9. 消息只能看到自己的**
+
+`messages` 同样设为「所有用户不可读写」，读取全部走 `messageCenter`，每条查询都强制带 `toOpenid = 当前 OPENID`。前端即使把请求参数改成别人的 openid 也没用——服务端根本不读这个参数。标记已读的更新条件同样是 `{ _id, toOpenid }`，拿到别人的消息 id 也改不动。
 
 ## 内容审核
 
@@ -391,13 +422,16 @@ node scripts/test-moderation.js
 - **没有图片上传**，所以二维码引流目前只能靠文字引导；将来若支持发图，需要补 `imgSecCheck`
 - 赛事数据靠控制台维护，没有后台管理界面（加赛事可参照 `docs/events.example.json` 批量导入）
 - `initDb` 会写入演示数据（虚构姓名与微信号），只适用于开发环境。它虽有 openid 白名单保护，上线前仍应**删除该云函数**并清空集合
-- 没有消息通知，申请与审核结果需要用户自己回页面查看
+- **站内消息不是推送**：用户不打开小程序就收不到任何提醒，首页角标也只在他回到首页时刷新。真要做到「主动送达」，得等小程序正式发布后接入订阅消息
+- 队长不能退出自己创建的队伍（会变成没有队长的孤儿队伍），解散与转让功能尚未开放
 
 ## Roadmap
 
 - [x] 创建队伍迁移到云函数，统一收口写操作
 - [x] 联系方式仅对已通过审核的成员可见
-- [ ] 订阅消息：有人申请、申请通过时推送通知
+- [x] 站内消息中心：申请结果、队员退出通知，首页角标 + 已读标记
+- [ ] 订阅消息：小程序正式发布后接入，作为「主动送达」的补充
+- [ ] 队长侧管理：踢出队员、解散队伍、转让队长（对应消息类型已在 `kind` 中预留）
 - [ ] 队伍编号改用独立计数器集合，避免并发重号
 - [ ] 赛事分区（院级 / 校级 / 省级）与搜索
 

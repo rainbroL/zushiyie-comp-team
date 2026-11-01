@@ -6,8 +6,49 @@
 }
 
 .header {
+  position: relative;
   text-align: center;
   padding: 40rpx 0 60rpx;
+}
+
+/* 消息铃铛：绝对定位于标题区右上角，不占布局高度 */
+.bell {
+  position: absolute;
+  top: 30rpx;
+  right: 0;
+  width: 72rpx;
+  height: 72rpx;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.18);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.bell:active {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.bell-icon {
+  font-size: 36rpx;
+  line-height: 1;
+}
+
+.badge {
+  position: absolute;
+  top: -4rpx;
+  right: -6rpx;
+  min-width: 32rpx;
+  height: 32rpx;
+  padding: 0 8rpx;
+  box-sizing: border-box;
+  border-radius: 16rpx;
+  background: #ff4757;
+  color: #fff;
+  font-size: 20rpx;
+  line-height: 32rpx;
+  text-align: center;
+  border: 2rpx solid #fff;
 }
 
 .title {

@@ -12,6 +12,7 @@ const cloud = require('wx-server-sdk')
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV })
 
 const { moderateText } = require('./moderation')
+const { pushMessage, KIND } = require('./notify')
 
 const db = cloud.database()
 
@@ -27,7 +28,9 @@ const STATUS = {
   PENDING: 'pending',
   APPROVED: 'approved',
   REJECTED: 'rejected',
-  CANCELLED: 'cancelled'
+  CANCELLED: 'cancelled',
+  // 主动退出队伍：与「撤回申请」区分开，也让退队后能重新申请
+  LEFT: 'left'
 }
 
 const ERR_TEXT = {
@@ -42,6 +45,8 @@ const ERR_TEXT = {
   NOT_LEADER: '只有队长可以处理申请',
   APPLICATION_NOT_FOUND: '申请记录不存在',
   APPLICATION_HANDLED: '该申请已被处理',
+  NOT_MEMBER: '你不是该队伍成员',
+  LEADER_CANT_QUIT: '队长不能退出队伍，请先解散或转让（暂未开放）',
   CONTENT_REJECTED: '内容不合规，请修改后再试',
   DB_ERROR: '服务开小差了，请稍后重试'
 }
@@ -182,7 +187,7 @@ async function handleApprove(openid, event) {
   const applicationId = event.applicationId
   if (!applicationId) throw new BizError('PARAM_MISSING')
 
-  return await db.runTransaction(async (transaction) => {
+  const approved = await db.runTransaction(async (transaction) => {
     // 事务内读不到文档会直接抛错，这里转成业务错误，避免前端只看到「服务开小差」
     const application = await transaction
       .collection(COLL.APPLICATIONS)
@@ -234,8 +239,34 @@ async function handleApprove(openid, event) {
       }
     })
 
-    return { teamId: team._id, memberCount: members.length, isFull }
+    return {
+      teamId: team._id,
+      teamName: team.teamName || '',
+      applicantOpenid: application.applicant.openid,
+      memberCount: members.length,
+      isFull
+    }
   })
+
+  // 事务提交之后再发通知。写消息失败不能让「已入队」回滚，所以放在事务外面。
+  await pushMessage(db, {
+    toOpenid: approved.applicantOpenid,
+    kind: KIND.APPLY_APPROVED,
+    title: '申请已通过',
+    desc: `你已加入「${approved.teamName}」，可以联系队长约时间了`,
+    target: {
+      page: '/pages/team-detail-view/team-detail-view',
+      query: { id: approved.teamId }
+    },
+    fromOpenid: openid,
+    refId: approved.teamId
+  })
+
+  return {
+    teamId: approved.teamId,
+    memberCount: approved.memberCount,
+    isFull: approved.isFull
+  }
 }
 
 // ============ 队长拒绝 ============
@@ -259,7 +290,66 @@ async function handleReject(openid, event) {
     }
   })
 
+  await pushMessage(db, {
+    toOpenid: application.applicant.openid,
+    kind: KIND.APPLY_REJECTED,
+    title: '申请未通过',
+    desc: `「${team.teamName || '该队伍'}」的队长没有通过你的申请`,
+    target: {
+      page: '/pages/team-detail-view/team-detail-view',
+      query: { id: team._id }
+    },
+    fromOpenid: openid,
+    refId: team._id
+  })
+
   return { status: STATUS.REJECTED }
+}
+
+// ============ 队员退出队伍 ============
+// 队长不允许直接退出：队伍会变成没有队长的孤儿队伍，
+// 而「解散 / 转让」还没做，所以这里先明确拦住并给出原因。
+async function handleQuit(openid, event) {
+  const { teamId } = event
+  if (!teamId) throw new BizError('PARAM_MISSING')
+
+  const team = await getDocOrNull(COLL.TEAMS, teamId)
+  if (!team) throw new BizError('TEAM_NOT_FOUND')
+  if (team.creatorOpenid === openid) throw new BizError('LEADER_CANT_QUIT')
+
+  const members = team.members || []
+  const me = members.filter((m) => m.openid === openid)[0]
+  if (!me) throw new BizError('NOT_MEMBER')
+
+  const rest = members.filter((m) => m.openid !== openid)
+
+  await db.collection(COLL.TEAMS).doc(teamId).update({
+    data: { members: rest, isFull: false }
+  })
+
+  // 申请记录改成 left，否则「已是成员」的判断会挡住他重新申请
+  const applicationId = buildApplicationId(teamId, openid)
+  const existed = await getDocOrNull(COLL.APPLICATIONS, applicationId)
+  if (existed) {
+    await db.collection(COLL.APPLICATIONS).doc(applicationId).update({
+      data: { status: STATUS.LEFT, handleTime: new Date() }
+    })
+  }
+
+  await pushMessage(db, {
+    toOpenid: team.creatorOpenid,
+    kind: KIND.MEMBER_QUIT,
+    title: '有队员退出',
+    desc: `${me.name || '一名队员'} 退出了「${team.teamName || '你的队伍'}」，当前 ${rest.length}/${team.maxSize || 3} 人`,
+    target: {
+      page: '/pages/team-detail-view/team-detail-view',
+      query: { id: teamId }
+    },
+    fromOpenid: openid,
+    refId: teamId
+  })
+
+  return { memberCount: rest.length, isFull: false }
 }
 
 // ============ 页面上下文 ============
@@ -337,6 +427,9 @@ exports.main = async (event) => {
         break
       case 'context':
         data = await handleContext(openid, event)
+        break
+      case 'quit':
+        data = await handleQuit(openid, event)
         break
       default:
         throw new BizError('INVALID_ACTION')

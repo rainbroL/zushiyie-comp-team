@@ -16,6 +16,7 @@
   <view class="status-card {{myStatus}}" wx:if="{{!isLeader && myStatus !== 'none'}}">
     <text class="status-text">{{statusTip}}</text>
     <view class="status-action" wx:if="{{myStatus === 'pending'}}" bindtap="onCancelApply">撤回申请</view>
+    <view class="status-action danger" wx:if="{{myStatus === 'approved'}}" bindtap="onQuitTeam">退出队伍</view>
   </view>
 
   <!-- 队伍描述 -->
