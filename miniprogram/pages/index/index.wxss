@@ -6,6 +6,10 @@
 }
 
 .header {
+  /* 父级是 align-items:center 的 flex 容器，不显式撑满会被压成文字宽，
+     铃铛的 right:0 就会落到标题字上 */
+  width: 100%;
+  box-sizing: border-box;
   position: relative;
   text-align: center;
   padding: 40rpx 0 60rpx;
@@ -14,8 +18,9 @@
 /* 消息铃铛：绝对定位于标题区右上角，不占布局高度 */
 .bell {
   position: absolute;
-  top: 30rpx;
-  right: 0;
+  top: 20rpx;
+  right: 4rpx;
+  z-index: 10;
   width: 72rpx;
   height: 72rpx;
   border-radius: 50%;
