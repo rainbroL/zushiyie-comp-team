@@ -58,6 +58,7 @@ zushiyie-comp-team/
 │   ├── initDb/                 # 一次性初始化：建集合 + 灌演示数据
 │   └── checkOpenapi/           # 内容安全接口探路工具（验证完可删）
 ├── docs/
+│   ├── events.example.json     # 赛事导入模板（JSON Lines，照格式改完在控制台导入）
 │   └── screenshots/            # 界面预览截图
 ├── miniprogram/
 │   ├── pages/
@@ -103,6 +104,14 @@ zushiyie-comp-team/
 | `canTeamUp` | boolean | 是否开放组队。为 `false` 时赛事详情页不显示「去组队」按钮 |
 | `teamCount` | number | 建队计数器，下一个队伍编号由它分配；并发建队靠事务保证不重号 |
 | `createTime` | Date | 列表排序依据 |
+
+**批量添加赛事**：`events` 没有后台界面，加比赛走控制台「导入」。仓库里的 `docs/events.example.json` 是可直接导入的样例，改内容、换 `_id` 即可。
+
+1. 云开发控制台 → 数据库 → `events` → 右上「导入」→ 选择该文件，冲突处理选 `Insert`
+2. 文件是 **JSON Lines** 格式：每行一个完整对象，不包在 `[...]` 里，行与行之间不加逗号
+3. 三个字段容易写错：`canTeamUp` 必须是裸的 `true` / `false`（写成字符串 `"false"` 仍会被判为真值，按钮照样出现）；`maxTeamSize` 必须是数字；`createTime` 统一用 ISO 字符串（如 `"2027-09-01T10:00:00.000Z"`），不要与 `initDb` 写入的 Date 混用，否则列表排序会乱
+
+`teamCount` 不用填，第一次有人在该赛事建队时由 `teamCreate` 自动补上。
 
 ### `teams_event` — 参赛队伍
 
@@ -379,7 +388,7 @@ node scripts/test-moderation.js
 - **联系方式仍是明文存储**（未加密），泄露风险已由「仅队员可见」控制，但数据库管理员和云函数日志仍能看到原文
 - **内容审核挡不住刻意规避**：同音字、拼音、emoji 替代都能绕过本地规则；官方接口对「拉人加微信」这类内容判为正常。真正的兜底是举报入口 + 人工处理，这部分还没做
 - **没有图片上传**，所以二维码引流目前只能靠文字引导；将来若支持发图，需要补 `imgSecCheck`
-- 赛事数据依赖控制台手工维护，没有后台管理界面
+- 赛事数据靠控制台维护，没有后台管理界面（加赛事可参照 `docs/events.example.json` 批量导入）
 - `initDb` 会写入演示数据（虚构姓名与微信号），只适用于开发环境。它虽有 openid 白名单保护，上线前仍应**删除该云函数**并清空集合
 - 没有消息通知，申请与审核结果需要用户自己回页面查看
 
