@@ -5,9 +5,7 @@
     <!-- 消息入口：常驻右上角，带未读角标 -->
     <view class="bell" bindtap="goToInbox">
       <text class="bell-icon">🔔</text>
-      <view class="badge" wx:if="{{unreadTotal > 0}}">
-        {{unreadTotal > 99 ? '99+' : unreadTotal}}
-      </view>
+      <view class="badge" wx:if="{{unreadTotal > 0}}">{{unreadTotal > 99 ? '99+' : unreadTotal}}</view>
     </view>
     <text class="title">😎 组师爺</text>
     <text class="subtitle">找到你的最佳队友</text>

@@ -4,9 +4,7 @@
   <!-- 队伍名称 -->
   <view class="card">
     <view class="team-name">{{team.teamName}}</view>
-    <view class="team-status {{team.isFull ? 'full' : 'recruiting'}}">
-      {{team.isFull ? '已满' : '招募中'}}
-    </view>
+    <view class="team-status {{team.isFull ? 'full' : 'recruiting'}}">{{team.isFull ? '已满' : '招募中'}}</view>
     <view class="team-number" wx:if="{{hasTeamNumber}}">
       #{{team.teamNumber}} 号队伍
     </view>

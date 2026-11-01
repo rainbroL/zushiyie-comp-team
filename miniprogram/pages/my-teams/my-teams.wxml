@@ -15,9 +15,7 @@
         <view class="team-head">
           <text class="team-number">#{{item.teamNumber}}</text>
           <text class="team-name">{{item.teamName}}</text>
-          <text class="team-status {{item.isFull ? 'full' : ''}}">
-            {{item.isFull ? '已满' : '招募中'}}
-          </text>
+          <text class="team-status {{item.isFull ? 'full' : ''}}">{{item.isFull ? '已满' : '招募中'}}</text>
         </view>
         <view class="team-meta">
           <text class="meta-text">成员 {{item.members.length}}/{{item.maxSize}}</text>
@@ -43,9 +41,7 @@
         <view class="team-head">
           <text class="team-number">#{{item.teamNumber}}</text>
           <text class="team-name">{{item.teamName}}</text>
-          <text class="team-status {{item.isFull ? 'full' : ''}}">
-            {{item.isFull ? '已满' : '招募中'}}
-          </text>
+          <text class="team-status {{item.isFull ? 'full' : ''}}">{{item.isFull ? '已满' : '招募中'}}</text>
         </view>
         <view class="team-meta">
           <text class="meta-text">成员 {{item.members.length}}/{{item.maxSize}}</text>

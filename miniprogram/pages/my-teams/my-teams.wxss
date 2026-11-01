@@ -68,6 +68,11 @@
   background: #e0f7f0;
   padding: 4rpx 16rpx;
   border-radius: 30rpx;
+  /* 不让它被队名挤压：压窄后文字会溢出背景，看起来就不居中了 */
+  flex-shrink: 0;
+  white-space: nowrap;
+  line-height: 1.4;
+  text-align: center;
 }
 
 .team-status.full {

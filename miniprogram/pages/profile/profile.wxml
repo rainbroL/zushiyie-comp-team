@@ -22,9 +22,7 @@
     <view class="form-item">
       <text class="form-label">年级 <text class="required">*</text></text>
       <picker mode="selector" range="{{gradeOptions}}" value="{{gradeIndex}}" bindchange="onGradeChange">
-        <view class="picker-display">
-          {{gradeOptions[gradeIndex] || '请选择年级'}}
-        </view>
+        <view class="picker-display">{{gradeOptions[gradeIndex] || '请选择年级'}}</view>
       </picker>
     </view>
 
