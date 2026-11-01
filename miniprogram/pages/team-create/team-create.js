@@ -176,6 +176,16 @@ Page({
       })
       return
     }
+    // 建队被规则拦下：文案较长，用弹窗才显示得全，toast 会被截断
+    if (result.code === 'ALREADY_HAS_TEAM' || result.code === 'CREATE_QUOTA_EXCEEDED') {
+      wx.showModal({
+        title: result.code === 'ALREADY_HAS_TEAM' ? '已有队伍' : '名额已用完',
+        content: result.message || '暂时无法创建新的队伍',
+        showCancel: false
+      })
+      return
+    }
+
     wx.showToast({ title: result.message || '创建失败，请重试', icon: 'none' })
   }
 })
