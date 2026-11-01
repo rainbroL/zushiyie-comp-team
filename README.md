@@ -109,7 +109,8 @@ zushiyie-comp-team/
 
 1. 云开发控制台 → 数据库 → `events` → 右上「导入」→ 选择该文件，冲突处理选 `Insert`
 2. 文件是 **JSON Lines** 格式：每行一个完整对象，不包在 `[...]` 里，行与行之间不加逗号
-3. 三个字段容易写错：`canTeamUp` 必须是裸的 `true` / `false`（写成字符串 `"false"` 仍会被判为真值，按钮照样出现）；`maxTeamSize` 必须是数字；`createTime` 统一用 ISO 字符串（如 `"2027-09-01T10:00:00.000Z"`），不要与 `initDb` 写入的 Date 混用，否则列表排序会乱
+3. `canTeamUp` 必须是裸的 `true` / `false`（写成字符串 `"false"` 仍会被判为真值，按钮照样出现）；`maxTeamSize` 必须是数字
+4. `createTime` 必须写成 `{"$date":"2027-09-01T10:00:00.000Z"}`。直接写 `"2027-09-01T10:00:00.000Z"` 会被当成字符串，与 `initDb` 写入的 Date 混排时排序会错——字符串整体排在日期之后，新赛事会沉到列表末尾
 
 `teamCount` 不用填，第一次有人在该赛事建队时由 `teamCreate` 自动补上。
 

@@ -1,3 +1,3 @@
-{"_id":"event_2027_math","title":"2027 全国大学生数学建模竞赛","description":"三人一队，72 小时完成一篇建模论文并提交。校内报名截止 9 月 20 日，答辩在 10 月初。","imageUrl":"","maxTeamSize":3,"canTeamUp":true,"createTime":"2027-09-01T10:00:00.000Z"}
-{"_id":"event_2027_design","title":"2027 中国大学生计算机设计大赛","description":"按作品参赛，设软件应用与开发、数媒设计等赛道。3-5 人组队，需在 4 月前完成一个完整作品并提交演示视频。","imageUrl":"","maxTeamSize":5,"canTeamUp":true,"createTime":"2027-08-20T10:00:00.000Z"}
-{"_id":"event_2027_briefing","title":"2027 竞赛政策宣讲会","description":"教务处统一讲解本年度各类竞赛的报名流程、时间节点与加分政策，无需组队，按时参加即可。","imageUrl":"","maxTeamSize":3,"canTeamUp":false,"createTime":"2027-08-10T10:00:00.000Z"}
+{"_id":"event_2027_math","title":"2027 全国大学生数学建模竞赛","description":"三人一队，72 小时完成一篇建模论文并提交。校内报名截止 9 月 20 日，答辩在 10 月初。","imageUrl":"","maxTeamSize":3,"canTeamUp":true,"createTime":{"$date":"2027-09-01T10:00:00.000Z"}}
+{"_id":"event_2027_design","title":"2027 中国大学生计算机设计大赛","description":"按作品参赛，设软件应用与开发、数媒设计等赛道。3-5 人组队，需在 4 月前完成一个完整作品并提交演示视频。","imageUrl":"","maxTeamSize":5,"canTeamUp":true,"createTime":{"$date":"2027-08-20T10:00:00.000Z"}}
+{"_id":"event_2027_briefing","title":"2027 竞赛政策宣讲会","description":"教务处统一讲解本年度各类竞赛的报名流程、时间节点与加分政策，无需组队，按时参加即可。","imageUrl":"","maxTeamSize":3,"canTeamUp":false,"createTime":{"$date":"2027-08-10T10:00:00.000Z"}}
