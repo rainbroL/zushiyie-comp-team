@@ -1,4 +1,21 @@
 <!-- pages/inbox/inbox.wxml -->
+<!-- 单条消息模板：未读区、已读区共用，改结构只改这一处，避免两段代码走样。
+     用官方推荐的 data="{{...item}}" 展开方式，模板内直接写字段名 -->
+<template name="msgCard">
+  <view class="msg-card {{read ? '' : 'unread'}}" data-id="{{id}}" bindtap="onTapItem">
+    <view class="msg-icon">{{icon}}</view>
+    <view class="msg-main">
+      <view class="msg-title-row">
+        <text class="msg-title">{{title}}</text>
+        <view class="dot" wx:if="{{!read}}"></view>
+      </view>
+      <text class="msg-desc">{{desc}}</text>
+      <text class="msg-time">{{timeText}}</text>
+    </view>
+    <text class="msg-arrow" wx:if="{{url}}">›</text>
+  </view>
+</template>
+
 <view class="page">
 
   <!-- 未读汇总 + 一键已读 -->
@@ -7,30 +24,35 @@
     <text class="topbar-action" bindtap="onMarkAll">全部已读</text>
   </view>
 
-  <!-- 消息列表 -->
-  <view class="msg-list" wx:if="{{items.length > 0}}">
-    <view
-      class="msg-card {{item.read ? '' : 'unread'}}"
-      wx:for="{{items}}"
-      wx:key="id"
-      data-index="{{index}}"
-      bindtap="onTapItem"
-    >
-      <view class="msg-icon">{{item.icon}}</view>
-      <view class="msg-main">
-        <view class="msg-title-row">
-          <text class="msg-title">{{item.title}}</text>
-          <view class="dot" wx:if="{{!item.read}}"></view>
-        </view>
-        <text class="msg-desc">{{item.desc}}</text>
-        <text class="msg-time">{{item.timeText}}</text>
-      </view>
-      <text class="msg-arrow" wx:if="{{item.url}}">›</text>
-    </view>
-  </view>
+  <block wx:if="{{unreadItems.length > 0 || readItems.length > 0}}">
 
-  <!-- 空状态 -->
-  <view class="empty" wx:elif="{{!loading}}">
+    <!-- 未读：永远排在最上面，不再按时间跟已读混排 -->
+    <view class="msg-list" wx:if="{{unreadItems.length > 0}}">
+      <block wx:for="{{unreadItems}}" wx:key="id">
+        <template is="msgCard" data="{{...item}}" />
+      </block>
+    </view>
+
+    <!-- 已读：收进「更早」区。分割线和「更早」只在**上方有未读**时才出现——
+         两段并存才有分界的意义；全是已读时不加，避免顶部孤零零一个「更早」 -->
+    <block wx:if="{{readItems.length > 0}}">
+      <view class="divider" wx:if="{{unreadItems.length > 0}}">
+        <view class="divider-line"></view>
+        <text class="divider-text">更早</text>
+        <view class="divider-line"></view>
+      </view>
+      <view class="msg-list">
+        <block wx:for="{{readItems}}" wx:key="id">
+          <template is="msgCard" data="{{...item}}" />
+        </block>
+      </view>
+    </block>
+
+  </block>
+
+  <!-- 空状态：两段都为空才算空。
+       不用 wx:elif 是因为它要求严格相邻，中间插注释容易踩坑 -->
+  <view class="empty" wx:if="{{!loading && unreadItems.length === 0 && readItems.length === 0}}">
     <text class="empty-icon">🔔</text>
     <text class="empty-text">还没有消息</text>
     <text class="empty-hint">申请结果、队员变动都会出现在这里</text>

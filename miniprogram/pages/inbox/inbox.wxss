@@ -28,14 +28,40 @@
   gap: 18rpx;
 }
 
+/* 未读区与「更早」区之间的分隔：细线夹字。
+   有已读就画，不和「上方是否有未读」挂钩，两段的分界始终明确 */
+.divider {
+  display: flex;
+  align-items: center;
+  gap: 18rpx;
+  padding: 30rpx 6rpx 18rpx;
+}
+
+.divider-line {
+  flex: 1;
+  height: 1rpx;
+  background: #e2e5ef;
+}
+
+.divider-text {
+  font-size: 22rpx;
+  color: #9aa4b8;
+  letter-spacing: 2rpx;
+}
+
 .msg-card {
   display: flex;
   align-items: flex-start;
   gap: 20rpx;
   background: #fff;
   border-radius: 20rpx;
+  /* 左边条始终占位（透明），未读时只换颜色。
+     否则已读/未读之间卡片宽度会差 6rpx，列表看起来会抖一下 */
+  border-left: 6rpx solid transparent;
+  box-sizing: border-box;
   padding: 26rpx 24rpx;
   box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.05);
+  transition: background-color 0.2s;
 }
 
 .msg-card:active {
@@ -43,10 +69,11 @@
   opacity: 0.92;
 }
 
-/* 未读用左侧色条 + 浅底，不靠文字提示，扫一眼就能分辨 */
+/* ===== 未读：色条 + 淡底 + 浮起阴影，三处同时变化 ===== */
 .msg-card.unread {
-  background: #f7f8ff;
-  border-left: 6rpx solid #667eea;
+  background: #f4f6ff;
+  border-left-color: #667eea;
+  box-shadow: 0 6rpx 20rpx rgba(102, 126, 234, 0.16);
 }
 
 .msg-icon {
@@ -54,10 +81,14 @@
   height: 68rpx;
   flex-shrink: 0;
   border-radius: 50%;
-  background: #eef0ff;
+  background: #f1f2f6;
   font-size: 34rpx;
   line-height: 68rpx;
   text-align: center;
+}
+
+.msg-card.unread .msg-icon {
+  background: #e3e8ff;
 }
 
 .msg-main {
@@ -71,17 +102,25 @@
   gap: 10rpx;
 }
 
+/* 已读：灰字常规字重；未读：深色加粗。这一档最关键——
+   底色差异再小，字重和颜色一眼就能分辨 */
 .msg-title {
   font-size: 30rpx;
+  font-weight: normal;
+  color: #8d99ae;
+}
+
+.msg-card.unread .msg-title {
   font-weight: bold;
-  color: #2d3436;
+  color: #1b2559;
 }
 
 .dot {
-  width: 12rpx;
-  height: 12rpx;
+  width: 14rpx;
+  height: 14rpx;
   border-radius: 50%;
   background: #ff4757;
+  flex-shrink: 0;
 }
 
 .msg-desc {
@@ -89,20 +128,32 @@
   margin-top: 8rpx;
   font-size: 26rpx;
   line-height: 1.5;
-  color: #636e72;
+  color: #a4adbe;
+}
+
+.msg-card.unread .msg-desc {
+  color: #5b6478;
 }
 
 .msg-time {
   display: block;
   margin-top: 10rpx;
   font-size: 22rpx;
-  color: #b2bec3;
+  color: #c3c9d6;
+}
+
+.msg-card.unread .msg-time {
+  color: #7b87a8;
 }
 
 .msg-arrow {
   align-self: center;
   font-size: 36rpx;
   color: #b2bec3;
+}
+
+.msg-card.unread .msg-arrow {
+  color: #667eea;
 }
 
 .empty {
